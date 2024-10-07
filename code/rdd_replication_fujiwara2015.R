@@ -1,10 +1,7 @@
 ################### EXERCÍCIO DE REPLICAÇÃO: FUJIWARA (2015) ###################
 ######################### AUTOR: GUSTAVO HENRIQUE ##############################
 
-#### Passo 1: Definir o Diretório de Trabalho ####
-setwd("\\\\sbsb2/DISOC_RIO/BMT/RAIS/pisos/Projeto_Pisos2022/Replication_Fujiwara2015")
-
-#### Passo 2: Importando os pacotes necessários ####
+#### Passo 1: Importando os pacotes necessários ####
 #if (!require("pacman")) install.packages("pacman")
 pacman::p_load("tidyverse",
                "haven",
@@ -19,14 +16,15 @@ pacman::p_load("tidyverse",
                "sf",
                "rnaturalearth",
                "rnaturalearthdata",
-               "rgeos")
+               "rgeos",
+               "here")
 
-#### Passo 3: Carregando as bases ####
-df_mun = read_dta('Dados/munic.dta')
-# df_state = read_dta('Dados/state.dta')
-# df_yearly = read_dta('Dados/yearly.dta')
+#### Passo 2: Carregando as bases ####
+df_mun = read_dta(here("data", "munic.dta"))
+df_state = read_dta(here("data", "state.dta"))
+df_yearly = read_dta(here("data", "yearly.dta"))
 
-#### Parte 4: Tratando as bases ####
+#### Passo 3: Tratando as bases ####
 df_mun = df_mun %>% 
   mutate(dep = voters96 - 40500,
          treat = ifelse(dep > 0, 1, 0),
@@ -52,7 +50,7 @@ ggplot(df_mun, aes(x = bin_voters96, y = bin_util98)) +
   # Add a cutoff line
   geom_vline(aes(xintercept = 40500), linetype = 'dashed')
 
-#### Parte 5: Estimação ####
+#### Passo 4: Estimação ####
 ##### Realizando as estimações a nível de munícipio #####
 rd1 = rdd_data(x = df_mun$dep, y = df_mun$r_util98, cutpoint = 0)
 rdd_bw_ik(rd1, kernel = "Uniform")
@@ -69,7 +67,7 @@ reg3 = feols(c(r_util98, attend, regist, r_util94, r_util02) ~ treat + dep + dep
 summary(reg3)
 
 # Filtrar os dados de acordo com as condições especificadas
-filtered_data <- subset(df_mun, voters96 < 100000 & voters96 > 4500)
+filtered_data = subset(df_mun, voters96 < 100000 & voters96 > 4500)
 
 # Criar o gráfico
 ggplot(filtered_data, aes(x = bin_voters96)) +
