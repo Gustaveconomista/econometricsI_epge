@@ -58,3 +58,31 @@ beta_estimates = estimate_beta()
 beta_estimates
 ```
 
+### Question 2
+Notice that
+$$ J(\beta) = \beta'A\beta \\ = \begin{pmatrix} \beta_1 & \beta_2 \end{pmatrix} \begin{pmatrix}
+a_{11} & a_{12} \\
+a_{21} & a_{22}
+\end{pmatrix} \begin{pmatrix} \beta_1 \\ \beta_2 \end{pmatrix} \\
+= \sum_{i=1}^2\sum_{j=1}^2\beta_i\beta_ja_{ij} \\ = \beta_1^2a_{11} + \beta_2^2a_{22} + \beta_1\beta_2a_{21} + \beta_1\beta_2a_{12} $$
+Hence, the partial derivative of $J(\beta)$ w. r. t. $\beta_i$ is
+$$ \frac{\partial J(\beta)}{\partial \beta_i} = 2\beta_ia_{ii} + \beta_ja_{ij} + \beta_ja_{ij} $$
+We can then write the Jacobian matrix $\frac{\partial J(\beta)}{\partial \beta}$ as a vector of these partial derivatives
+$$ \frac{\partial J(\beta)}{\partial \beta} = (A + A')\beta $$
+Therefore, $\frac{\partial J(\beta)}{\partial \beta} = 2A\beta$ if and only if A is symmetric, i.e. if and only if $a_{ij}=a_{ji}, \forall i \neq j$.
+
+### Question 3
+We know that $Cov(e)=\Sigma$, for a random vector $e$. Hence, for some nonstochastic matrix $A \in \mathbb{R}^{k \times n}$, we have
+$$ Cov(Ae) = ACov(e)A' = A \Sigma A' $$
+by the property of the variance-covariance matrix.
+
+### Question 4
+Since $\mathbb{E}[e|z]=0$, by the Law of Iterated Expectations (LIE), we have
+$$ \mathbb{E}[z'e]=\mathbb{E}[\mathbb{E}[z'e|z]]=\mathbb{E}[z'\mathbb{E}[e|z]]=0 $$
+and
+$$ Var(z'e)=\mathbb{E}[z'e(z'e)']=\mathbb{E}[z'ee'z]=\mathbb{E}[\mathbb{E}[z'ee'z|z]]=\mathbb{E}[z'\mathbb{E}[ee'|z]z] $$
+Let $\mathbb{E}[ee'|z]=\Sigma$ be the covariance matrix of $e$. Hence, we have
+$Var(z'e)=z' \Sigma z$. Therefore,
+$$ (z'e) \sim \mathcal{N}(0, z' \Sigma z) $$
+
+### Question 5
