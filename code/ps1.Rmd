@@ -1,0 +1,60 @@
+---
+title: "PS1 - Econometrics  I"
+author: "Gustavo Henrique and Bruno  Tonholo"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem Set 1
+### Question 1
+```{r}
+# Setting objects
+c = matrix(c(12547, 4818, 3440, 8583, 6657, 4990, 14493, 7990, 6139, 7043, 3758, 1487, 13238, 11033, 4921),
+           nrow = 5,
+           ncol = 3, 
+           byrow = TRUE)
+p = c(1.05, 1.04, 1.1)
+r = c(1.1, 1.09, 1.14)
+alpha = 0.18
+g_bar_1 = function(beta) {
+  moment = 0
+  for (i in 1:nrow(c)) {
+    for (t in 1:(ncol(c) - 1)) {
+      c_1 = c[i, 1]
+      c_2 = c[i, 2]
+      p_1 = p[1]
+      r_2 = r[2]
+      moment = moment + (p_1 * c_1^(-alpha) - beta * r_2 * c_2^(-alpha))
+    }
+  }
+  return(moment/(nrow(c)))
+}
+g_bar_2 = function(beta) {
+  moment = 0
+  for (i in 1:nrow(c)) {
+    for (t in 1:(ncol(c) - 1)) {
+      c_2 = c[i, 2]
+      c_3 = c[i, 3]
+      p_2 = p[2]
+      r_3 = r[3]
+      moment = moment + (p_2 * c_2^(-alpha) - beta * r_3 * c_3^(-alpha))
+    }
+  }
+  return(moment/(nrow(c)))
+}
+# Estimating beta using MME
+estimate_beta = function() {
+  beta_hat_1 = uniroot(g_bar_1, c(0, 1))$root
+  beta_hat_2 = uniroot(g_bar_2, c(0, 1))$root
+  return(c(beta_hat_1, beta_hat_2))
+}
+
+# Beta estimates
+beta_estimates = estimate_beta()
+beta_estimates
+```
+
