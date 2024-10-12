@@ -87,3 +87,196 @@ $$ Bias[\hat{f}(x_0)] \approx 2 \cdot 0 \cdot \int z^2K(z)dz + O(h^3) = O(h^3)
 $$
 
 ### Question 6
+```{r}
+# Loading data
+pacman::p_load(
+  here
+)
+iv_data = readRDS(here("problem_sets/data", "iv_data.Rds"))
+```
+1. The jacobian of $\bar{g}_n(\beta)$ is
+$$ G_n(\beta)= \frac{\partial \bar{g_n}(\beta)}{\partial \beta}=-\frac{1}{n}\sum_{i=1}^n z_i x'_i $$
+which does not depend on $\beta$.
+2. Notice that, with the identity matrix as the weighting matrix, we get
+$$ J(\beta)=\bar{g}'_n(\beta)W_n\bar{g}_n(\beta)=\bar{g}'_n(\beta)\bar{g}_n(\beta) $$
+Hence, by coding
+```{r}
+# Seting the variables
+y = iv_data[, 1] # Dependent variable
+x = as.matrix(iv_data[, 2:3]) # Endogenous variables
+z = as.matrix(iv_data[, 4:6]) # Instruments
+
+# Defining the moment function and the objective function
+g_n = function(beta){
+  u = y - x%*%beta
+  g_n_beta = colMeans(sweep(z, 1, u, `*`))
+  return(g_n_beta)
+}
+J_beta = function(beta){
+  g_n_beta = g_n(beta)
+  return(t(g_n_beta) %*% g_n_beta)
+}
+
+# Minimizing the objective function
+result = optim(par = c(0, 0), fn = J_beta)
+
+# Printing the result
+beta_hat = result$par
+objective_value = result$value
+```
+we obtain
+```{r}
+cat("Beta estimate:", beta_hat, "\n")
+cat("Objective function value:", objective_value, "\n")
+```
+3. By using $\hat{\beta}$, we obtain
+```{r}
+# Defining the "g_i" function for each observation i
+g_i = function(i, beta){
+  u_i = as.numeric(y[i] - x[i, ] %*% beta)
+  g_i_beta = z[i, ] * u_i
+  return(g_i_beta)
+}
+
+# Calculating S_hat 
+S_hat = matrix(0, ncol = 3, nrow = 3)
+n = nrow(iv_data) # Nº of observations
+for (i in 1:n) {
+  g_i_beta_hat = g_i(i, beta_hat)
+  S_hat = S_hat + g_i_beta_hat %*% t(g_i_beta_hat)
+}
+S_hat = S_hat/n
+cat("S_hat:\n")
+S_hat
+```
+4. By repeiting step 2
+```{r}
+# Redefining the objective function using S_hat
+S_hat_inv = solve(S_hat)
+J_beta_opt = function(beta){
+  g_n_beta = g_n(beta)
+  return(t(g_n_beta) %*% S_hat_inv %*% g_n_beta)
+}
+
+# Minimizing the objective function
+result_opt = optim(par = c(0, 0), fn = J_beta_opt)
+
+# Printing the result
+beta_hat_opt = result_opt$par
+```
+we obtain
+```{r}
+cat("Beta estimate:", beta_hat_opt, "\n")
+```
+5. Encoding
+```{r}
+# Defining the Jacobian G_n(β)
+G_n = function(beta) {
+  n = nrow(iv_data)         # Nº of observations
+  g_n_beta = g_n(beta)      # Calculating g_n(β)
+  
+  # Initialize the Jacobian matrix G_n(β)
+  G_n_matrix = matrix(0, nrow = 3, ncol = 2)
+
+  # Calculating the Jacobian
+  for (i in 1:n) {
+    u_i = y[i] - x[i, ] %*% beta  
+    for (j in 1:2) {
+      # Partial derivatives of g_n(β) with respect to β_j
+      G_n_matrix[, j] = G_n_matrix[, j] + z[i, ] * (-x[i, j]) * (1/n)
+    }
+  }
+  
+  return(G_n_matrix)
+}
+
+# Calculate the Jacobian in beta_hat
+G_hat = G_n(beta_hat)
+
+# Result
+cat("Jacobian G_hat:\n")
+G_hat
+```
+6. Finally
+```{r}
+# Calculating the product G_hat' S_hat^{-1} G_hat
+G_hat_transpose = t(G_hat)
+product = G_hat_transpose %*% S_hat_inv %*% G_hat
+
+# Calculating the covariance matrix V_GMM
+V_GMM = (1/n) * solve(product)
+
+# Resultado
+cat("Estimated covariance matrix V_GMM:\n")
+V_GMM
+```
+
+### Question 7
+Encoding
+```{r}
+pacman::p_load(
+  tidyverse,
+  fixest
+)
+temperature_states = readRDS(here("problem_sets/data", "temperature_states.Rds"))
+
+# Step 1: Calculate the national average daily maximum temperature
+national_avg_temp = temperature_states %>%
+  group_by(date) %>% # Group by date
+  # Calculate the average max temperature
+  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE))
+
+# Step 2: Count the number of days with average temperature above 32°C per year-month
+days_above_32C = national_avg_temp %>%
+  mutate(year_month = format(date, "%Y-%m")) %>% # Create a year-month column
+  filter(avg_temp > 32) %>%                     # Filter for temperatures above 32°C
+  group_by(year_month) %>%                      # Group by year-month
+  summarise(days_above_32C = n())               # Count the days
+
+# Step 3: Regression of the count of days above 32°C on calendar year with month fixed effects
+# Add columns for the year and month
+days_above_32C = days_above_32C %>%
+  mutate(year = as.numeric(substring(year_month, 1, 4)),
+         month = as.numeric(substring(year_month, 6, 7)))
+
+# Perform regression using fixest
+model = feols(days_above_32C ~ year | month, data = days_above_32C)
+
+# Display regression results
+summary(model)
+
+# Step 4: Repeat the analysis for each region
+results_by_region = lapply(unique(temperature_states$region), function(region) {
+  # Filter the data for the specific region
+  region_data = temperature_states %>%
+    filter(region == region)                    # Keep only the rows for the current region
+  
+  # Calculate the average daily temperature for the region
+  region_avg_temp = region_data %>%
+    group_by(date) %>%                          # Group by date
+    summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) # Calculate average max temperature for the region
+  
+  # Count the number of days with average temperature above 32°C per year-month for the region
+  region_days_above_32C = region_avg_temp %>%
+    mutate(year_month = format(date, "%Y-%m")) %>% # Create a year-month column
+    filter(avg_temp > 32) %>%                     # Filter for temperatures above 32°C
+    group_by(year_month) %>%                      # Group by year-month
+    summarise(days_above_32C = n())               # Count the days
+  
+  # Add columns for the year and month
+  region_days_above_32C = region_days_above_32C %>%
+    mutate(year = as.numeric(substring(year_month, 1, 4)),
+         month = as.numeric(substring(year_month, 6, 7)))
+  
+  # Perform regression for the region
+  model_region = feols(days_above_32C ~ year | month,
+                       data = region_days_above_32C)
+  
+  # Return the region name and model
+  return(list(region = region, model = model_region))
+})
+
+# Display results by region
+results_by_region
+```
+
