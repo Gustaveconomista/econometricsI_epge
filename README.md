@@ -1,2 +1,2 @@
-# Replication Project
-Paper replication project for the Econometrics I at EPGE
+# Econometrics I 
+Repository for the Econometrics I at EPGE.
