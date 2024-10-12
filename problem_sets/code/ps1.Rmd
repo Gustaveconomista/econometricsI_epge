@@ -20,42 +20,29 @@ c = matrix(c(12547, 4818, 3440, 8583, 6657, 4990, 14493, 7990, 6139, 7043, 3758,
 p = c(1.05, 1.04, 1.1)
 r = c(1.1, 1.09, 1.14)
 alpha = 0.18
-g_bar_1 = function(beta) {
-  moment = 0
-  for (i in 1:nrow(c)) {
-    for (t in 1:(ncol(c) - 1)) {
-      c_1 = c[i, 1]
-      c_2 = c[i, 2]
-      p_1 = p[1]
-      r_2 = r[2]
-      moment = moment + (p_1 * c_1^(-alpha) - beta * r_2 * c_2^(-alpha))
-    }
-  }
-  return(moment/(nrow(c)))
-}
-g_bar_2 = function(beta) {
-  moment = 0
-  for (i in 1:nrow(c)) {
-    for (t in 1:(ncol(c) - 1)) {
-      c_2 = c[i, 2]
-      c_3 = c[i, 3]
-      p_2 = p[2]
-      r_3 = r[3]
-      moment = moment + (p_2 * c_2^(-alpha) - beta * r_3 * c_3^(-alpha))
-    }
-  }
-  return(moment/(nrow(c)))
-}
+
 # Estimating beta using MME
-estimate_beta = function() {
-  beta_hat_1 = uniroot(g_bar_1, c(0, 1))$root
-  beta_hat_2 = uniroot(g_bar_2, c(0, 1))$root
-  return(c(beta_hat_1, beta_hat_2))
+beta_1 = c()
+for (i in 1:nrow(c)) {
+  c_1 = c[i, 1]
+  c_2 = c[i, 2]
+  p_1 = p[1]
+  r_2 = r[2]
+  beta_1[i] = (p_1*c_1^(-alpha))/(r_2*c_2^(-alpha))
 }
+beta_hat_1 = sum(beta_1)/length(beta_1)
+beta_2 = c()
+for (i in 1:nrow(c)) {
+  c_2 = c[i, 2]
+  c_3 = c[i, 3]
+  p_2 = p[2]
+  r_3 = r[3]
+  beta_2[i] = (p_2*c_2^(-alpha))/(r_3*c_3^(-alpha))
+}
+beta_hat_2 = sum(beta_2)/length(beta_2)
 
 # Beta estimates
-beta_estimates = estimate_beta()
-beta_estimates
+print(c(beta_hat_1, beta_hat_2))
 ```
 
 ### Question 2
@@ -86,3 +73,17 @@ $Var(z'e)=z' \Sigma z$. Therefore,
 $$ (z'e) \sim \mathcal{N}(0, z' \Sigma z) $$
 
 ### Question 5
+Notice 1st that since $x$ is uniformly distributed, we have
+$$ f(x) = \begin{cases} 
+\frac{1}{b-a}, & \text{if } x \in [a, b] \\
+0, & \text{otherwise }
+\end{cases} $$
+which implies
+$$ f'(x)=0 \land f''(x)=0 $$
+We know that, assuming i.i.d. draws, we obtain
+$$ Bias[\hat{f}(x_0)]=\mathbb{E}[\hat{f}(x_0)]-f(x_0) \approx \frac{h^2}{2}f''(x_0)\int z^2K(z)dz + O(h^3) $$
+Therefore, we have
+$$ Bias[\hat{f}(x_0)] \approx 2 \cdot 0 \cdot \int z^2K(z)dz + O(h^3) = O(h^3) 
+$$
+
+### Question 6
