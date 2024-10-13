@@ -280,3 +280,69 @@ results_by_region = lapply(unique(temperature_states$region), function(region) {
 results_by_region
 ```
 
+### Question 8
+Data from 2001-2004
+```{r}
+pacman::p_load(
+  tidyverse,
+  fixest
+)
+
+temperature_states = readRDS(here("problem_sets/data", "temperature_states.Rds"))
+
+# Filter for the years 2001-2004
+filtered_data <- temperature_states %>%
+  filter(year >= 2001 & year <= 2004)
+
+# Calculate average maximum temperature (tmax) per month and state
+monthly_avg_tmax <- filtered_data %>%
+  group_by(state, month) %>%
+  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate kernel density estimation
+kde <- density(monthly_avg_tmax$avg_temp, bw = 2)
+
+# Plot
+kde_df <- data.frame(x = kde$x, y = kde$y)
+ggplot(kde_df, aes(x = x, y = y)) +
+  geom_line(color = "blue") +
+  labs(title = "Kernel Density Estimation of Average Monthly Tmax (2001-2004)",
+       x = "Average Monthly Tmax",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+Data from 2018-2021
+```{r}
+pacman::p_load(
+  tidyverse,
+  fixest
+)
+
+temperature_states = readRDS(here("problem_sets/data", "temperature_states.Rds"))
+
+# Filter for the years 2018-2021
+filtered_data <- temperature_states %>%
+  filter(year >= 2018 & year <= 2021)
+
+# Calculate average maximum temperature (tmax) per month and state
+monthly_avg_tmax <- filtered_data %>%
+  group_by(state, month) %>%
+  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate kernel density estimation
+kde <- density(monthly_avg_tmax$avg_temp, bw = 2)
+
+# Plot
+kde_df <- data.frame(x = kde$x, y = kde$y)
+ggplot(kde_df, aes(x = x, y = y)) +
+  geom_line(color = "blue") +
+  labs(title = "Kernel Density Estimation of Average Monthly Tmax (2018-2021)",
+       x = "Average Monthly Tmax",
+       y = "Density") +
+  theme_minimal()
+
+```
