@@ -59,9 +59,8 @@ $$ \frac{\partial J(\beta)}{\partial \beta} = (A + A')\beta $$
 Therefore, $\frac{\partial J(\beta)}{\partial \beta} = 2A\beta$ if and only if A is symmetric, i.e. if and only if $a_{ij}=a_{ji}, \forall i \neq j$.
 
 ### Question 3
-We know that $Cov(e)=\Sigma$, for a random vector $e$. Hence, for some nonstochastic matrix $A \in \mathbb{R}^{k \times n}$, we have
-$$ Cov(Ae) = ACov(e)A' = A \Sigma A' $$
-by the property of the variance-covariance matrix.
+We know that $\Sigma=Cov(e)=E\left[(e)(e)^{\prime}\right]-E[e] E[e]^{\prime}$, for a random vector $e$. Hence, for some nonstochastic matrix $A \in \mathbb{R}^{k \times n}$, we have
+$$ Cov(Ae) = E\left[(A e)(A e)^{\prime}\right]-E[A e] E[A e]^{\prime}\\ =E\left[A e e^{\prime} A^{\prime}\right]-E[A e] E\left[e^{\prime} A^{\prime}\right] \\=A\left(E\left[e e^{\prime}\right]-E[e] E\left[e^{\prime}\right]\right) A^{\prime} \\= A Cov(e) A'= A \Sigma A' .$$
 
 ### Question 4
 Since $\mathbb{E}[e|z]=0$, by the Law of Iterated Expectations (LIE), we have
