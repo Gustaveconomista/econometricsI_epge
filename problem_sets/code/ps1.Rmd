@@ -53,7 +53,7 @@ a_{21} & a_{22}
 \end{pmatrix} \begin{pmatrix} \beta_1 \\ \beta_2 \end{pmatrix} \\
 = \sum_{i=1}^2\sum_{j=1}^2\beta_i\beta_ja_{ij} \\ = \beta_1^2a_{11} + \beta_2^2a_{22} + \beta_1\beta_2a_{21} + \beta_1\beta_2a_{12} $$
 Hence, the partial derivative of $J(\beta)$ w. r. t. $\beta_i$ is
-$$ \frac{\partial J(\beta)}{\partial \beta_i} = 2\beta_ia_{ii} + \beta_ja_{ij} + \beta_ja_{ij} $$
+$$ \frac{\partial J(\beta)}{\partial \beta_i} = 2\beta_ia_{ii} + \beta_ja_{ji} + \beta_ja_{ij} $$
 We can then write the Jacobian matrix $\frac{\partial J(\beta)}{\partial \beta}$ as a vector of these partial derivatives
 $$ \frac{\partial J(\beta)}{\partial \beta} = (A + A')\beta $$
 Therefore, $\frac{\partial J(\beta)}{\partial \beta} = 2A\beta$ if and only if A is symmetric, i.e. if and only if $a_{ij}=a_{ji}, \forall i \neq j$.
