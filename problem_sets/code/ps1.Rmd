@@ -1,6 +1,6 @@
 ---
 title: "PS1 - Econometrics  I"
-author: "Gustavo Henrique and Bruno  Tonholo"
+author: "Gustavo Henrique and Bruno Tonholo"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -214,10 +214,13 @@ V_GMM
 ### Question 7
 Encoding
 ```{r}
+# Loading needed packages
 pacman::p_load(
   tidyverse,
   fixest
 )
+
+# Importing the database
 temperature_states = readRDS(here("problem_sets/data", "temperature_states.Rds"))
 
 # Step 1: Calculate the national average daily maximum temperature
@@ -229,16 +232,15 @@ national_avg_temp = temperature_states %>%
 # Step 2: Count the number of days with average temperature above 32°C per year-month
 days_above_32C = national_avg_temp %>%
   mutate(year_month = format(date, "%Y-%m")) %>% # Create a year-month column
-  filter(avg_temp > 32) %>%                     # Filter for temperatures above 32°C
-  group_by(year_month) %>%                      # Group by year-month
-  summarise(days_above_32C = n())               # Count the days
-
-# Step 3: Regression of the count of days above 32°C on calendar year with month fixed effects
-# Add columns for the year and month
-days_above_32C = days_above_32C %>%
+  # Filter for temperatures above 32°C
+  filter(avg_temp > 32) %>%
+  group_by(year_month) %>% # Group by year-month
+  summarise(days_above_32C = n()) %>% # Count the days
+  # Add columns for the year and month
   mutate(year = as.numeric(substring(year_month, 1, 4)),
          month = as.numeric(substring(year_month, 6, 7)))
 
+# Step 3: Regression of the count of days above 32°C on calendar year with month fixed effects
 # Perform regression using fixest
 model = feols(days_above_32C ~ year | month, data = days_above_32C)
 
@@ -246,37 +248,165 @@ model = feols(days_above_32C ~ year | month, data = days_above_32C)
 summary(model)
 
 # Step 4: Repeat the analysis for each region
-results_by_region = lapply(unique(temperature_states$region), function(region) {
+results_by_region = lapply(unique(temperature_states$region), function(reg) {
   # Filter the data for the specific region
   region_data = temperature_states %>%
-    filter(region == region)                    # Keep only the rows for the current region
+    filter(region == reg)  # Keep only the rows for the current region
   
   # Calculate the average daily temperature for the region
   region_avg_temp = region_data %>%
-    group_by(date) %>%                          # Group by date
-    summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) # Calculate average max temperature for the region
+    group_by(date) %>%  # Group by date
+    # Calculate average max temperature for the region
+    summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) 
   
   # Count the number of days with average temperature above 32°C per year-month for the region
   region_days_above_32C = region_avg_temp %>%
     mutate(year_month = format(date, "%Y-%m")) %>% # Create a year-month column
-    filter(avg_temp > 32) %>%                     # Filter for temperatures above 32°C
-    group_by(year_month) %>%                      # Group by year-month
-    summarise(days_above_32C = n())               # Count the days
-  
-  # Add columns for the year and month
-  region_days_above_32C = region_days_above_32C %>%
+    filter(avg_temp > 32) %>% # Filter for temperatures above 32°C
+    group_by(year_month) %>% # Group by year-month
+    summarise(days_above_32C = n()) %>% # Count the days
+    # Add columns for the year and month
     mutate(year = as.numeric(substring(year_month, 1, 4)),
-         month = as.numeric(substring(year_month, 6, 7)))
+           month = as.numeric(substring(year_month, 6, 7)))
   
   # Perform regression for the region
   model_region = feols(days_above_32C ~ year | month,
                        data = region_days_above_32C)
   
   # Return the region name and model
-  return(list(region = region, model = model_region))
+  return(list(region = reg, model = model_region))
 })
 
 # Display results by region
 results_by_region
+```
+
+### Question 8
+Encoding
+```{r}
+# Step 1: Calculate the average maximum temperature per month and per state
+# Create a 'year-month' column
+temperature_states = temperature_states %>%
+  mutate(year_month = format(date, "%Y-%m")) # Format year-month
+
+# Step 2: Calculate the average temperature (tmax) per state and per month
+avg_temp_per_month = temperature_states %>%
+  group_by(state, year_month) %>%
+  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) %>%
+  mutate(year = as.numeric(substring(year_month, 1, 4)),
+         month = as.numeric(substring(year_month, 6, 7)))
+
+# Step 3: Filter the data for the periods 2001-2004 and 2018-2021
+avg_temp_2001_2004 = avg_temp_per_month %>%
+  filter(year >= 2001 & year <= 2004)
+
+avg_temp_2018_2021 = avg_temp_per_month %>%
+  filter(year >= 2018 & year <= 2021)
+
+# Step 4: Kernel density estimation using Gaussian kernel with bandwidth h = 2
+# For the period 2001-2004
+kde_2001_2004 = density(avg_temp_2001_2004$avg_temp, kernel = "gaussian", bw = 2)
+
+# For the period 2018-2021
+kde_2018_2021 = density(avg_temp_2018_2021$avg_temp, kernel = "gaussian", bw = 2)
+
+# Step 5: Plot the two estimated density functions on top of each other
+# Generate density values for both periods
+plot_data_2001_2004 = data.frame(
+  x = kde_2001_2004$x,
+  density = kde_2001_2004$y,
+  period = "2001-2004"
+)
+
+plot_data_2018_2021 = data.frame(
+  x = kde_2018_2021$x,
+  density = kde_2018_2021$y,
+  period = "2018-2021"
+)
+
+# Combine the two datasets for plotting
+plot_data = rbind(plot_data_2001_2004, plot_data_2018_2021)
+
+# Step 6: Plot the densities using ggplot2
+ggplot(plot_data, aes(x = x, y = density, color = period)) +
+  geom_line(linewidth = 1.2) +
+  labs(title = "Kernel Density of Average Monthly Temperatures",
+       x = "Average Monthly Temperature (°C)",
+       y = "Density",
+       color = "Period") +
+  theme_minimal() +
+  scale_color_manual(values = c("2001-2004" = "blue", "2018-2021" = "red"))
+```
+
+### Question 9
+Encoding
+```{r}
+# Loading needed package
+pacman::p_load(
+  np
+)
+# Step 1: Calculate the average maximum temperature per month and per state, as done previously
+avg_temp_per_month_region = temperature_states %>%
+  group_by(state, year_month, region, year) %>%
+  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) %>%
+  mutate(year = as.numeric(substring(year_month, 1, 4)),
+         month = as.numeric(substring(year_month, 6, 7)))
+
+# Step 2: Define a function to perform local constant regression for each region
+local_constant_regression = function(region_data, kernel = "gaussian", bandwidth = 2) {
+  # Extract year and temperature data
+  x = region_data$year # Calendar year
+  y = region_data$avg_temp # Average temperature
+  
+  # Perform local constant regression using npreg() from the np package
+  np_model = npreg(tydat = y, txdat = x, regtype = "lc", bwmethod = "cv.aic", ckertype = kernel, bws = bandwidth)
+  
+  # Create a dataframe to hold the fitted values (estimates) for plotting
+  fitted_data = data.frame(
+    year = np_model$eval$x,
+    fitted_temp = np_model$mean,
+    region = region_data$region
+  )
+  
+  return(fitted_data)
+}
+
+# Step 3: Apply the regression to each of the 5 macro regions
+regions = unique(temperature_states$region) # Extract unique macro regions
+fitted_results = list() # List to store results for each region
+
+for (reg in regions) {
+  region_data = avg_temp_per_month_region %>%
+    filter(region == reg) # Filter data for the current region
+  
+  # Perform local constant regression and store the fitted results
+  fitted_results[[reg]] = local_constant_regression(region_data)
+}
+
+# Step 4: Plot the results for all regions
+plot_data = do.call(rbind, fitted_results) %>% 
+  mutate(region = ifelse(region == 1, "North",
+                         ifelse(region == 2, "Northeast",
+                                ifelse(region == 3, "Southeast",
+                                       ifelse(region == 4, "South",
+                                              "Central West")))))
+
+ggplot(plot_data, aes(x = year, y = fitted_temp, color = region)) +
+  geom_line(linewidth = 1.2) +
+  labs(title = "Local Constant Regression of Average Temperature by Year",
+       x = "Year",
+       y = "Fitted Average Monthly Temperature (°C)",
+       color = "Region") +
+  theme_minimal() +
+  scale_color_manual(values = c("North" = "blue", "Northeast" = "green", 
+                                "Southeast" = "red", "South" = "purple", 
+                                "Central West" = "orange"))
+```
+
+### Rendering
+```{r}
+rmarkdown::render("ps1.Rmd",
+                  output_format = "html_document",
+                  output_dir = here("problem_sets/outputs"))
 ```
 
