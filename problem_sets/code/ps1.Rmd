@@ -281,60 +281,69 @@ results_by_region
 ```
 
 ### Question 8
-Encoding
+Data from 2001-2004
 ```{r}
-# Step 1: Calculate the average maximum temperature per month and per state
-# Create a 'year-month' column
-temperature_states = temperature_states %>%
-  mutate(year_month = format(date, "%Y-%m")) # Format year-month
+pacman::p_load(
+  tidyverse,
+  fixest
+)
 
-# Step 2: Calculate the average temperature (tmax) per state and per month
-avg_temp_per_month = temperature_states %>%
-  group_by(state, year_month) %>%
-  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) %>%
-  mutate(year = as.numeric(substring(year_month, 1, 4)),
-         month = as.numeric(substring(year_month, 6, 7)))
+temperature_states = readRDS(here("problem_sets/data", "temperature_states.Rds"))
 
-# Step 3: Filter the data for the periods 2001-2004 and 2018-2021
-avg_temp_2001_2004 = avg_temp_per_month %>%
+# Filter for the years 2001-2004
+filtered_data <- temperature_states %>%
   filter(year >= 2001 & year <= 2004)
 
-avg_temp_2018_2021 = avg_temp_per_month %>%
+# Calculate average maximum temperature (tmax) per month and state
+monthly_avg_tmax <- filtered_data %>%
+  group_by(state, month) %>%
+  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate kernel density estimation
+kde <- density(monthly_avg_tmax$avg_temp, bw = 2)
+
+# Plot
+kde_df <- data.frame(x = kde$x, y = kde$y)
+ggplot(kde_df, aes(x = x, y = y)) +
+  geom_line(color = "blue") +
+  labs(title = "Kernel Density Estimation of Average Monthly Tmax (2001-2004)",
+       x = "Average Monthly Tmax",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+Data from 2018-2021
+```{r}
+pacman::p_load(
+  tidyverse,
+  fixest
+)
+
+temperature_states = readRDS(here("problem_sets/data", "temperature_states.Rds"))
+
+# Filter for the years 2018-2021
+filtered_data <- temperature_states %>%
   filter(year >= 2018 & year <= 2021)
 
-# Step 4: Kernel density estimation using Gaussian kernel with bandwidth h = 2
-# For the period 2001-2004
-kde_2001_2004 = density(avg_temp_2001_2004$avg_temp, kernel = "gaussian", bw = 2)
+# Calculate average maximum temperature (tmax) per month and state
+monthly_avg_tmax <- filtered_data %>%
+  group_by(state, month) %>%
+  summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) %>%
+  ungroup()
 
-# For the period 2018-2021
-kde_2018_2021 = density(avg_temp_2018_2021$avg_temp, kernel = "gaussian", bw = 2)
+# Calculate kernel density estimation
+kde <- density(monthly_avg_tmax$avg_temp, bw = 2)
 
-# Step 5: Plot the two estimated density functions on top of each other
-# Generate density values for both periods
-plot_data_2001_2004 = data.frame(
-  x = kde_2001_2004$x,
-  density = kde_2001_2004$y,
-  period = "2001-2004"
-)
-
-plot_data_2018_2021 = data.frame(
-  x = kde_2018_2021$x,
-  density = kde_2018_2021$y,
-  period = "2018-2021"
-)
-
-# Combine the two datasets for plotting
-plot_data = rbind(plot_data_2001_2004, plot_data_2018_2021)
-
-# Step 6: Plot the densities using ggplot2
-ggplot(plot_data, aes(x = x, y = density, color = period)) +
-  geom_line(linewidth = 1.2) +
-  labs(title = "Kernel Density of Average Monthly Temperatures",
-       x = "Average Monthly Temperature (°C)",
-       y = "Density",
-       color = "Period") +
-  theme_minimal() +
-  scale_color_manual(values = c("2001-2004" = "blue", "2018-2021" = "red"))
+# Plot
+kde_df <- data.frame(x = kde$x, y = kde$y)
+ggplot(kde_df, aes(x = x, y = y)) +
+  geom_line(color = "green") +
+  labs(title = "Kernel Density Estimation of Average Monthly Tmax (2018-2021)",
+       x = "Average Monthly Tmax",
+       y = "Density") +
+  theme_minimal()
 ```
 
 ### Question 9
