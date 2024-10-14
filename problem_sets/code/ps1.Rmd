@@ -21,27 +21,13 @@ p = c(1.05, 1.04, 1.1)
 r = c(1.1, 1.09, 1.14)
 alpha = 0.18
 
-# Estimating beta using MME
-beta_1 = c()
-for (i in 1:nrow(c)) {
-  c_1 = c[i, 1]
-  c_2 = c[i, 2]
-  p_1 = p[1]
-  r_2 = r[2]
-  beta_1[i] = (p_1*c_1^(-alpha))/(r_2*c_2^(-alpha))
-}
-beta_hat_1 = sum(beta_1)/length(beta_1)
-beta_2 = c()
-for (i in 1:nrow(c)) {
-  c_2 = c[i, 2]
-  c_3 = c[i, 3]
-  p_2 = p[2]
-  r_3 = r[3]
-  beta_2[i] = (p_2*c_2^(-alpha))/(r_3*c_3^(-alpha))
-}
-beta_hat_2 = sum(beta_2)/length(beta_2)
+# Estimating beta using GMM
+beta_1 = (p[1] * c[, 1] ^ (-alpha)) / (r[2] * c[, 2] ^ (-alpha))
+beta_hat_1 = mean(beta_1)
 
-# Beta estimates
+beta_2 = (p[2] * c[, 2] ^ (-alpha)) / (r[3] * c[, 3] ^ (-alpha))
+beta_hat_2 = mean(beta_2)
+
 print(c(beta_hat_1, beta_hat_2))
 ```
 
