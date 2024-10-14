@@ -224,62 +224,49 @@ pacman::p_load(
 # Importing the database
 temperature_states = readRDS(here("problem_sets/data", "temperature_states.Rds"))
 
-# Step 1: Calculate the national average daily maximum temperature
-national_avg_temp = temperature_states %>%
-  group_by(date) %>% # Group by date
-  # Calculate the average max temperature
+# Calculate daily average temperature across grid points
+daily_avg_tmax <- temperature_states %>%
+  group_by(date) %>%
   summarise(avg_temp = mean(mean_tmax, na.rm = TRUE))
 
-# Step 2: Count the number of days with average temperature above 32°C per year-month
-days_above_32C = national_avg_temp %>%
-  mutate(year_month = format(date, "%Y-%m")) %>% # Create a year-month column
-  # Filter for temperatures above 32°C
+# Add month and year columns
+daily_avg_tmax <- daily_avg_tmax %>%
+  mutate(year = format(date, "%Y"),
+         month = format(date, "%m"),
+         year_month = paste(year, month, sep = "-"))
+
+# Count the number of days with average temperature exceeding 32C
+days_above_32 <- daily_avg_tmax %>%
   filter(avg_temp > 32) %>%
-  group_by(year_month) %>% # Group by year-month
-  summarise(days_above_32C = n()) %>% # Count the days
-  # Add columns for the year and month
-  mutate(year = as.numeric(substring(year_month, 1, 4)),
-         month = as.numeric(substring(year_month, 6, 7)))
+  group_by(year_month) %>%
+  summarise(days_above_32 = n())
 
-# Step 3: Regression of the count of days above 32°C on calendar year with month fixed effects
-# Perform regression using fixest
-model = feols(days_above_32C ~ year | month, data = days_above_32C)
+# Regress the number of days above 32C on the year with month fixed effects
+regression_model <- feols(days_above_32 ~ 1 | year_month, data = days_above_32)
+summary(regression_model)
 
-# Display regression results
-summary(model)
-
-# Step 4: Repeat the analysis for each region
-results_by_region = lapply(unique(temperature_states$region), function(reg) {
-  # Filter the data for the specific region
-  region_data = temperature_states %>%
-    filter(region == reg)  # Keep only the rows for the current region
-  
-  # Calculate the average daily temperature for the region
-  region_avg_temp = region_data %>%
+# Repeat for each region
+regional_results <- lapply(unique(temperature_states$region), function(reg) {
+  # Filter data for the specific region
+  region_days_above_32C <- temperature_states %>%
+    filter(region == reg) %>%  # Filter for the current region
     group_by(date) %>%  # Group by date
-    # Calculate average max temperature for the region
-    summarise(avg_temp = mean(mean_tmax, na.rm = TRUE)) 
+    summarise(avg_temp = mean(mean_tmax, na.rm = TRUE), .groups = "drop") %>%  # Average max temperature
+    mutate(year_month = format(date, "%Y-%m")) %>%  # Create a year-month column
+    filter(avg_temp > 32) %>%  # Filter for temperatures above 32°C
+    group_by(year_month) %>%  # Group by year-month
+    summarise(days_above_32C = n(),  # Count the days
+              year = as.numeric(substring(year_month, 1, 4)),
+              month = as.numeric(substring(year_month, 6, 7)), .groups = "drop")
   
-  # Count the number of days with average temperature above 32°C per year-month for the region
-  region_days_above_32C = region_avg_temp %>%
-    mutate(year_month = format(date, "%Y-%m")) %>% # Create a year-month column
-    filter(avg_temp > 32) %>% # Filter for temperatures above 32°C
-    group_by(year_month) %>% # Group by year-month
-    summarise(days_above_32C = n()) %>% # Count the days
-    # Add columns for the year and month
-    mutate(year = as.numeric(substring(year_month, 1, 4)),
-           month = as.numeric(substring(year_month, 6, 7)))
-  
-  # Perform regression for the region
-  model_region = feols(days_above_32C ~ year | month,
+model_region = feols(days_above_32C ~ year | month,
                        data = region_days_above_32C)
   
-  # Return the region name and model
-  return(list(region = reg, model = model_region))
+return(list(region = reg, model = model_region))
 })
 
 # Display results by region
-results_by_region
+regional_results
 ```
 
 ### Question 8
