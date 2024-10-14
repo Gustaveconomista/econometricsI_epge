@@ -64,12 +64,11 @@ $$ Cov(Ae) = E\left[(A e)(A e)^{\prime}\right]-E[A e] E[A e]^{\prime}\\ =E\left[
 
 ### Question 4
 Since $\mathbb{E}[e|z]=0$, by the Law of Iterated Expectations (LIE), we have
-$$ \mathbb{E}[z'e]=\mathbb{E}[\mathbb{E}[z'e|z]]=\mathbb{E}[z'\mathbb{E}[e|z]]=0 $$
-and
-$$ Var(z'e)=\mathbb{E}[z'e(z'e)']=\mathbb{E}[z'ee'z]=\mathbb{E}[\mathbb{E}[z'ee'z|z]]=\mathbb{E}[z'\mathbb{E}[ee'|z]z] $$
-Let $\mathbb{E}[ee'|z]=\Sigma$ be the covariance matrix of $e$. Hence, we have
-$Var(z'e)=z' \Sigma z$. Therefore,
-$$ (z'e) \sim \mathcal{N}(0, z' \Sigma z) $$
+$$ \mathbb{E}[z'e]=\mathbb{E}[\mathbb{E}[z'e|z]]=\mathbb{E}[z'\mathbb{E}[e|z]]=0.$$
+Also, by the result obtained in the previous item, we have that
+$$ Var(z'e) = z'Var(e)z$$
+If we call $Var(e)=\Sigma$ we have $Var(z'e)=z' \Sigma z$. Therefore,
+$$ (z'e) \sim \mathcal{N}(0, z' \Sigma z). $$
 
 ### Question 5
 Notice 1st that since $x$ is uniformly distributed, we have
