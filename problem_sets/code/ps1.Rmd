@@ -40,9 +40,16 @@ a_{21} & a_{22}
 = \sum_{i=1}^2\sum_{j=1}^2\beta_i\beta_ja_{ij} \\ = \beta_1^2a_{11} + \beta_2^2a_{22} + \beta_1\beta_2a_{21} + \beta_1\beta_2a_{12} $$
 Hence, the partial derivative of $J(\beta)$ w. r. t. $\beta_i$ is
 $$ \frac{\partial J(\beta)}{\partial \beta_i} = 2\beta_ia_{ii} + \beta_ja_{ji} + \beta_ja_{ij} $$
-We can then write the Jacobian matrix $\frac{\partial J(\beta)}{\partial \beta}$ as a vector of these partial derivatives
-$$ \frac{\partial J(\beta)}{\partial \beta} = (A + A')\beta $$
-Therefore, $\frac{\partial J(\beta)}{\partial \beta} = 2A\beta$ if and only if A is symmetric, i.e. if and only if $a_{ij}=a_{ji}, \forall i \neq j$.
+We can then write the Jacobian matrix $\frac{\partial J(\beta)}{\partial \beta}$ in the following way
+$$ \frac{\partial J(\beta)}{\partial \beta} = \binom{2 a_{11} \beta_1+\left(a_{12}+a_{21}\right) \beta_2}{\left(a_{12}+a_{21}\right) \beta_1+2 a_{22} \beta_2} $$
+But we have that $2A\beta$ is equal to $$
+2 A \beta=2\left(\begin{array}{ll}
+a_{11} & a_{12} \\
+a_{21} & a_{22}
+\end{array}\right)\binom{\beta_1}{\beta_2}=\binom{2\left(a_{11} \beta_1+a_{12} \beta_2\right)}{2\left(a_{21} \beta_1+a_{22} \beta_2\right)}
+$$
+
+Therefore, $\frac{\partial J(\beta)}{\partial \beta} = 2A\beta$ if and only if $a_{ij}=a_{ji}, \forall i \neq j$, i.e., if and only if A is symmetric.
 
 ### Question 3
 We know that $\Sigma=Cov(e)=E\left[(e)(e)^{\prime}\right]-E[e] E[e]^{\prime}$, for a random vector $e$. Hence, for some nonstochastic matrix $A \in \mathbb{R}^{k \times n}$, we have
