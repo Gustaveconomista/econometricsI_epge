@@ -402,10 +402,3 @@ ggplot(plot_data, aes(x = year, y = fitted_temp, color = region)) +
                                 "Central West" = "orange"))
 ```
 
-### Rendering
-```{r}
-rmarkdown::render("ps1.Rmd",
-                  output_format = "html_document",
-                  output_dir = here("problem_sets/outputs"))
-```
-
