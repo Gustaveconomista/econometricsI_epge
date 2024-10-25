@@ -1,12 +1,12 @@
 ---
 title: "Replication Project"
-author: "Gustavo Henrique and Bruno Tonholo"
+author: "Gustavo Henrique & Bruno Tonholo"
 date: "`r Sys.Date()`"
-output: html_document
+output: ioslides_presentation
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ## Step 1: Importing needed packages
@@ -19,7 +19,6 @@ pacman::p_load("tidyverse",
                "fixest",
                "rdrobust",
                "rddensity",
-               "robust",
                "rdd",
                "miceadds",
                "rddtools",
@@ -68,38 +67,34 @@ munic = munic %>%
 ## Step 4: Estimation
 
 ```{r}
-# Variáveis de interesse (equivalente ao "foreach" loop no Stata)
-vars = c("income", "gini", "latitude", "longitude", "illiter", "less4", "less8", "population91", "population00", "urbanization")
-
-# Loop para aplicar as operações para cada variável
-for (var in vars) {
-  # Exibir a soma da variável (equivalente ao sum `var' no Stata)
-  cat("Soma de", var, ":", sum(munic[[var]], na.rm = TRUE), "\n")
-  
-  # Seleção de largura de banda usando o método MSE-RD (mserd)
-  obw = rdbwselect(y = munic[[var]], x = munic$dep, kernel = "uniform", bwselect = "mserd")
-  cat("Largura de banda selecionada (MSE-RD) para", var, ":", obw$bws[1], "\n")
-  
-  # Regressão robusta com banda inferior à largura de banda selecionada (MSE-RD)
-  model1 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < obw$bws[1]))
-  cat("Regressão com largura de banda (MSE-RD) para", var, ":\n")
-  print(summary(model1))
-
-  # Regressão robusta com banda < 20000
-  model2 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 20000))
-  cat("Regressão com banda < 20000 para", var, ":\n")
-  print(summary(model2))
-
-  # Regressão robusta com banda < 10000
-  model3 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 10000))
-  cat("Regressão com banda < 10000 para", var, ":\n")
-  print(summary(model3))
-
-  # Regressão robusta com banda < 5000
-  model4 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 5000))
-  cat("Regressão com banda < 5000 para", var, ":\n")
-  print(summary(model4))
-}
+# feols(r_util98 ~ treat + dep + deptreat,
+#       data = df_mun %>% 
+#         filter(bw < 11873),
+#       vcov = "HC1")
+# feols(attend ~ treat + dep + deptreat,
+#       data = df_mun %>% 
+#         filter(bw < 12438),
+#       vcov = "HC1")
+# feols(regist ~ treat + dep + deptreat,
+#       data = df_mun %>% 
+#         filter(bw < 15956),
+#       vcov = "HC1")
+# feols(r_util94 ~ treat + dep + deptreat,
+#       data = df_mun %>% 
+#         filter(bw < 17111),
+#       vcov = "HC1")
+# feols(r_util02 ~ treat + dep + deptreat,
+#       data = df_mun %>% 
+#         filter(bw < 17204),
+#       vcov = "HC1")
+# feols(c(r_util98, attend, regist, r_util94, r_util02) ~ treat + dep + deptreat,
+#       data = df_mun %>% 
+#         filter(bw < 10000),
+#       vcov = "HC1")
+# feols(c(r_util98, attend, regist, r_util94, r_util02) ~ treat + dep + deptreat,
+#       data = df_mun %>% 
+#         filter(bw < 5000),
+#       vcov = "HC1")
 ```
 
 ## Step 5: Data visualization
@@ -116,25 +111,19 @@ plot_main1 = ggplot(munic %>% filter(voters96 < 100000, voters96 > 4500), aes(x 
   stat_smooth(aes(x = voters96, y = r_util02), method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "red", data = munic %>% filter(voters96 < 100000, voters96 > 40500)) +
   stat_smooth(aes(x = voters96, y = r_util98), method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "blue", data = munic %>% filter(voters96 < 40500, voters96 > 5000)) +
   stat_smooth(aes(x = voters96, y = r_util98), method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "blue", data = munic %>% filter(voters96 < 100000, voters96 > 40500)) +
-  geom_vline(xintercept = 40500, color = "#cc345c") +
+  geom_vline(xintercept = 40500) +
   labs(y = "", x = "Number of Registered Voters - 1996") +
-  theme_minimal_hgrid() +
+  theme_minimal() +
   scale_x_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 20000), labels = number_format(accuracy = 1, big.mark = "")) +
-  scale_y_continuous(breaks = seq(0.6, 1, by = 0.1))
+  scale_y_continuous(limits = c(0.525, 1), breaks = seq(0.6, 1, by = 0.1))
 
-legend_plot1 = get_legend(
-  ggplot(munic, aes(x = bin_voters96)) +
-    geom_point(aes(y = bin_util94, color = "Valid Votes/Turnout - 1994 Election (Paper Only)"), shape = 15, size = 2.5) +
-    geom_point(aes(y = bin_util98, color = "Valid Votes/Turnout - 1998 Election (Discontinuity)"), shape = 16, size = 2.5) +
-    geom_point(aes(y = bin_util02, color = "Valid Votes/Turnout - 2002 Election (Electronic Only)"), shape = 17, size = 2.5) +
-    scale_color_manual(values = c("green", "blue", "red")) +
-    guides(color = guide_legend(title = NULL)) +
-    theme_void() +
-    theme(
-      legend.background = element_rect(color = "black",  # Cor da borda do retângulo
-                                       fill = NA)        # Sem preenchimento (transparente)
-    )
-)
+legend_plot1 = get_legend(ggplot(munic, aes(x = bin_voters96)) +
+  geom_point(aes(y = bin_util94, color = "Valid Votes/Turnout - 1994 Election (Paper Only)"), shape = 15, size = 2.5) +
+  geom_point(aes(y = bin_util98, color = "Valid Votes/Turnout - 1998 Election (Discontinuity)"), shape = 16, size = 2.5) +
+  geom_point(aes(y = bin_util02, color = "Valid Votes/Turnout - 2002 Election (Electronic Only)"), shape = 17, size = 2.5) +
+  scale_color_manual(values = c("green", "blue", "red")) +
+  guides(color = guide_legend(title = NULL)) +
+  theme_void())
 
 final_plot1 = plot_grid(plot_main1, legend_plot1, ncol = 1, rel_heights = c(1, 0.2))
 
@@ -146,24 +135,18 @@ plot_main2 = ggplot(munic %>% filter(voters96 < 100000, voters96 > 4500), aes(x 
   stat_smooth(aes(x = voters96, y = regist), method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "green", data = munic %>% filter(voters96 < 100000, voters96 > 40500)) +
   stat_smooth(aes(x = voters96, y = attend), method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "blue", data = munic %>% filter(voters96 < 40500, voters96 > 5000)) +
   stat_smooth(aes(x = voters96, y = attend), method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "blue", data = munic %>% filter(voters96 < 100000, voters96 > 40500)) +
-  geom_vline(xintercept = 40500, color = "#cc345c") +
+  geom_vline(xintercept = 40500) +
   labs(y = "", x = "Number of Registered Voters - 1996") +
-  theme_minimal_hgrid() +
-  scale_x_continuous(breaks = seq(0, 100000, by = 20000), labels = number_format(accuracy = 1, big.mark = "")) +
+  theme_minimal() +
+  scale_x_continuous(limits = c(0, 100000), breaks = seq(0, 100000, by = 20000), labels = number_format(accuracy = 1, big.mark = "")) +
   scale_y_continuous(limits = c(0.525, 1), breaks = seq(0.6, 1, by = 0.1))
 
-legend_plot2 = get_legend(
-  ggplot(munic, aes(x = bin_voters96)) +
-    geom_point(aes(y = bin_regist, color = "Registered Voters/Total Population"), shape = 16, size = 2.5) +
-    geom_point(aes(y = bin_attend, color = "Turnout/Registered Voters"), shape = 17, size = 2.5) +
-    scale_color_manual(values = c("green", "blue")) +
-    guides(color = guide_legend(title = NULL)) +
-    theme_void() +
-    theme(
-      legend.background = element_rect(color = "black",  # Cor da borda do retângulo
-                                       fill = NA)        # Sem preenchimento (transparente)
-    )
-)
+legend_plot2 = get_legend(ggplot(munic, aes(x = bin_voters96)) +
+                            geom_point(aes(y = bin_regist, color = "Registered Voters/Total Population"), shape = 16, size = 2.5) +
+                            geom_point(aes(y = bin_attend, color = "Turnout/Registered Voters"), shape = 17, size = 2.5) +
+                            scale_color_manual(values = c("green", "blue")) +
+                            guides(color = guide_legend(title = NULL)) +
+                            theme_void())
 
 final_plot2 = plot_grid(plot_main2, legend_plot2, ncol = 1, rel_heights = c(1, 0.2))
 ```

@@ -1,0 +1,379 @@
+{smcl}
+{txt}{sf}{ul off}{.-}
+
+       log:  {res}c:\imbens\guido\karthik\webprogram_09aug\rd_log_09aug4.smcl
+
+  {txt}log type:  {res}smcl
+
+ {txt}opened on:  {res} 4 Aug 2009, 11:35:40
+
+{txt}
+
+{com}. 
+
+. 
+
+. 
+
+. /*  example of fuzzy regression discontinuity design */
+
+. /* read in data */
+
+. infile y w x z1 z2 z3 using art_fuzzy_rd.txt, clear
+
+{txt}(2000 observations read)
+
+
+
+{com}. 
+
+. /* display summary statistics */
+
+. summ
+
+
+
+{txt}    Variable {c |}       Obs        Mean    Std. Dev.       Min        Max
+
+{hline 13}{c +}{hline 56}
+
+           y {c |}{res}      2000    .8514133    2.238817    -6.4845     8.4516
+
+           {txt}w {c |}{res}      2000       .3275    .4694187          0          1
+
+           {txt}x {c |}{res}      2000    .0332528    .9900492    -3.3996     3.2124
+
+          {txt}z1 {c |}{res}      2000     .006862     .995141    -3.5221     3.6326
+
+          {txt}z2 {c |}{res}      2000    .0096877    1.027505    -3.5532     3.4005
+
+{txt}{hline 13}{c +}{hline 56}
+
+          z3 {c |}{res}      2000   -.0242338    1.009812    -4.2151     3.6895
+
+{txt}
+
+{com}. 
+
+. /* estimate rd effect */
+
+. /* y is outcome */
+
+. /* x is forcing variable */
+
+. /* z1, z2, z3 are additional covariates */
+
+. /* w is treatment indicator */
+
+. /* c(0.5) implies that threshold is 0.5 */
+
+. 
+
+. rdob y x z1 z2 z3, c(0.5)  fuzzy(w)
+
+{res}{txt}optimal bandwidth(h_opt) = {res}.84015499
+
+{txt}RD point estimate = {res}1.0622666
+
+{txt}RD standard error = {res}.06672707
+
+{txt}
+
+{com}. 
+
+. /* if details on estimation are required */
+
+. 
+
+. rdob y x z1 z2 z3, c(0.5)  fuzzy(w) detail
+
+{res}{txt}optimal bandwidth(h_opt) = {res}.84015499
+
+{txt}RD point estimate = {res}1.0622666
+
+{txt}RD standard error = {res}.06672707
+
+
+
+{txt}<Intermediate results for bandwidth calculation>
+
+h1 = {res}.39835347
+
+{txt}N_h1- = {res}301{col 25}{txt}N_h1+ = {res}254
+
+{txt}Y_h1- = {res}.80026312{col 25}{txt}Y_h1+ = {res}2.046278
+
+{txt}N- = {res}1360{col 25}{txt}N+ = {res}640
+
+{txt}fx(c) = {res}.34830876
+
+{txt}sigma^2(c) = {res}3.2531254
+
+{txt}MedianX- = {res}-.3802{col 25}{txt}MedianX+ = {res}1.0364
+
+{txt}m^3(c) = {res}-8.9314443
+
+{txt}h2- = {res}.9348225{col 25}{txt}h2+ = {res}1.0411054
+
+{txt}N2- = {res}723{col 25}{txt}N2+ = {res}517
+
+{txt}m^2-(c) = {res}2.3763617{col 25}{txt}m^2+(c) = {res}.76056955
+
+{txt}r- = {res}4.2420753{col 25}{txt}r+ = {res}3.8562384
+
+{txt}C_K = {res}3.4375
+
+
+
+{txt}<Intermediate results for RD estimation>
+
+
+
+Estimated_coefficients_Y_left[1,5]
+
+       beta_l    gamma1_l    gamma2_l    gamma3_l     alpha_l
+
+y  {res}-1.4319953    1.008779   1.0256717    .9631275   1.1703809
+
+
+
+{txt}Estimated_coefficients_Y_right[1,5]
+
+      beta_r   gamma1_r   gamma2_r   gamma3_r    alpha_r
+
+y  {res}1.4149535  1.0472583  .97794929  .97738549  1.7575173
+
+
+
+{txt}Estimated_coefficients_W_left[1,5]
+
+       beta_l    gamma1_l    gamma2_l    gamma3_l     alpha_l
+
+w  {res}-.42977207   .00324321    .0075731  -.01370418   .24859456
+
+
+
+{txt}Estimated_coefficients_W_right[1,5]
+
+       beta_r    gamma1_r    gamma2_r    gamma3_r     alpha_r
+
+w  {res} .35797454   .03333692  -.00472999  -.01591324   .80131499
+
+
+
+{txt}symmetric DeltaYL[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 42.274895
+
+{txt}r2  {res} 7.6477255   2.1789121
+
+{txt}r3  {res}-.84143196   .26163189   41.115137
+
+{txt}r4  {res}-1.8134758  -.96414399  -1.5980526   57.373273
+
+{txt}r5  {res}-2.4169017  -.53603875  -1.2253202   4.6329692   36.604136
+
+
+
+{txt}symmetric DeltaYR[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 33.433331
+
+{txt}r2  {res} 5.1638151    1.341613
+
+{txt}r3  {res}-5.8707753  -.88893436   28.085448
+
+{txt}r4  {res} 1.1340763   .19174241  -1.8585978   27.660959
+
+{txt}r5  {res} 3.9210257   .02066342  -.73545404   .10356359   34.101705
+
+
+
+{txt}symmetric DeltaWL[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 25.859584
+
+{txt}r2  {res} 3.8032669    .8535367
+
+{txt}r3  {res} 1.1134069   .47836955   24.392433
+
+{txt}r4  {res} .56088911  -.52223384   -2.967165   33.563214
+
+{txt}r5  {res}-2.6333104   -.6144646  -4.5031466   1.8315458   19.381246
+
+
+
+{txt}symmetric DeltaWR[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 19.624273
+
+{txt}r2  {res} 2.5432861   .53070752
+
+{txt}r3  {res} -4.599569  -.66803418   14.287506
+
+{txt}r4  {res} 1.5417162   .40679635  -.58335951   14.680698
+
+{txt}r5  {res} 3.7923555   .23714394  -2.0475764  -.29579088   21.812623
+
+
+
+{txt}symmetric DeltaYWL[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 25.478306
+
+{txt}r2  {res} 3.8461174   .87986679
+
+{txt}r3  {res} -.0486003    .3768228   23.564174
+
+{txt}r4  {res}  .2585861  -.63984402  -2.8218935   37.142596
+
+{txt}r5  {res}-2.8162027  -.57211053  -3.3969164   3.3490304   19.372031
+
+
+
+{txt}symmetric DeltaYWR[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 19.461198
+
+{txt}r2  {res} 2.5322764   .53103762
+
+{txt}r3  {res}-5.2568494  -.70127004   15.169741
+
+{txt}r4  {res} 1.0520065   .15259611  -.86496365   14.096906
+
+{txt}r5  {res} 2.8386737   .08039812  -1.1753244  -.10802297   19.881871
+
+
+
+{txt}symmetric GammaL[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 317.00036
+
+{txt}r2  {res} 91.689766   38.724888
+
+{txt}r3  {res} 5.3179893    .7095449   325.65062
+
+{txt}r4  {res}-7.4418372  -.87421875   .08667004   365.87105
+
+{txt}r5  {res}-8.9595104  -4.0435527   .47989942    11.49554   309.98911
+
+
+
+{txt}symmetric GammaR[5,5]
+
+            c1          c2          c3          c4          c5
+
+r1  {res} 254.98833
+
+{txt}r2  {res} 63.173253   24.402418
+
+{txt}r3  {res}-5.3179961  -3.9645865   242.62754
+
+{txt}r4  {res} 7.4418287   3.1703568  -18.263722   245.04271
+
+{txt}r5  {res} 8.9595097  -.25228786   .26457461   14.016993   260.85697
+
+{txt}
+
+{com}. 
+
+. 
+
+. clear
+
+{txt}
+
+{com}. /*  example of sharp regression discontinuity design */
+
+. 
+
+. infile y x  z1 z2 z3 z4 using art_sharp_rd.txt, clear
+
+{txt}(1000 observations read)
+
+
+
+{com}. 
+
+. summ
+
+
+
+{txt}    Variable {c |}       Obs        Mean    Std. Dev.       Min        Max
+
+{hline 13}{c +}{hline 56}
+
+           y {c |}{res}      1000    .8599701    2.437958    -6.1598     7.8408
+
+           {txt}x {c |}{res}      1000   -.0159921    1.030868    -3.7989     3.6829
+
+          {txt}z1 {c |}{res}      1000   -.0069933    1.005088    -2.6543     3.4578
+
+          {txt}z2 {c |}{res}      1000    .0006841    .9642191    -3.2744     2.8882
+
+          {txt}z3 {c |}{res}      1000   -.0175452    1.011192    -3.5851     3.7476
+
+{txt}{hline 13}{c +}{hline 56}
+
+          z4 {c |}{res}      1000    .0067984    .9805332    -2.6127     3.2348
+
+{txt}
+
+{com}. /* this can be run in two way, first as sharp design */
+
+. rdob y x z1 z2 z3 z4, c(0.2990)
+
+{res}{txt}optimal bandwidth(h_opt) = {res}.67002881
+
+{txt}RD point estimate = {res}.99959946
+
+{txt}RD standard error = {res}.05290336
+
+{txt}
+
+{com}. 
+
+. /* it can also be run as a fuzzy design, with treatment indicator defined */
+
+. gen w=(x>0.2990)
+
+{txt}
+
+{com}. rdob y x z1 z2 z3 z4, c(0.2990) fuzzy(w) 
+
+{res}{txt}optimal bandwidth(h_opt) = {res}.67002881
+
+{txt}RD point estimate = {res}.99959946
+
+{txt}RD standard error = {res}.05290336
+
+{txt}
+
+{com}. 
+
+. log close
+
+       {txt}log:  {res}c:\imbens\guido\karthik\webprogram_09aug\rd_log_09aug4.smcl
+
+  {txt}log type:  {res}smcl
+
+ {txt}closed on:  {res} 4 Aug 2009, 11:35:49
+
+{txt}{.-}
+
+{smcl}
+{txt}{sf}{ul off}
