@@ -1,0 +1,114 @@
+---
+title: "PS2 - Econometrics I"
+author: "Gustavo Henrique & Bruno Tonholo"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: sandstone
+    toc: TRUE
+    toc_float: TRUE
+---
+
+# Question 1
+In the conditional logit model, the market share of a good $j \in \{0, 1, 2\}$ (or the  probability of choosing the good $j$) is given by:
+
+$$ s_j = \mathbb{P}[\delta_j+\epsilon_j>\max\limits_{k \neq j}\{\delta_k+\epsilon_k\}] = \frac{e^{\delta_j}}{\sum_{k=0}^2 e^{\delta_k}} $$
+
+Then, since $\delta_0=0$, the market shares for each good are:
+
+$$ s_0 = \frac{1}{1+e^{\delta_1}+e^{\delta_2}}, \qquad s_1 = \frac{e^{\delta_1}}{1+e^{\delta_1}+e^{\delta_2}}, \qquad s_2 = \frac{e^{\delta_2}}{1+e^{\delta_1}+e^{\delta_2}} $$
+
+So, dividing $s_1$ by $s_0$ gives us:
+
+$$ \frac{s_1}{s_0}=\frac{\frac{e^{\delta_1}}{1+e^{\delta_1}+e^{\delta_2}}}{\frac{1}{1+e^{\delta_1}+e^{\delta_2}}}=e^{\delta_1} $$
+Therefore, by taking the natural logarithm of both sides, we obtain:
+
+$$ \delta_1=\log(\frac{s_1}{s_0})=\log(s_1)-\log(s_0) $$
+
+as desired.
+
+# Question 2
+Consider a student $i$ who is going to start a PhD in economics at EPGE. He then needs to buy a new laptop to help him with his studies, but is unsure which one to choose. His utility in obtaining a laptop can be represented as follows:
+
+$$ U_i(x)=\beta_0+\beta_1p_x+\beta_2model_x+\beta_3opsys_x+\beta_4strg_x+\epsilon_{ix} $$
+
+where $x$ is the amount of laptop, $p_x$ is the price of laptop, $opsys_x$ represents the operating system, $strg_x$ is the storage capacity and $\epsilon_{ix}$ is the random error term, which follows an Extreme Value (EV) distribution.
+
+# Question 3
+Encoding:
+```{r}
+# Loading needed packages
+pacman::p_load(
+  tidyverse,
+  here
+)
+
+# Importing database
+blp_data = readRDS(here("data", "blp-data.Rds"))
+
+# Calculating the non-participants market share per year
+mrkt_share_non_participants = blp_data %>%
+  group_by(year) %>%
+  summarize(s_0 = 1 - sum(share, na.rm = TRUE))
+
+# Adding s_0 values to the original database
+blp_data = blp_data %>%
+  left_join(mrkt_share_non_participants, by = "year") %>% 
+  # Calculating the δ_j values
+  mutate(delta_j = log(share) - log(s_0))
+
+# Printing result
+head(blp_data %>%
+  # Selecting convenient columns
+  select(model_id, share, s_0, delta_j))
+```
+
+# Question 4
+Encoding:
+```{r}
+# Estimating
+model = lm(delta_j ~ hpwt + air + mpd + space + price, data = blp_data)
+
+# Printing the result
+summary_model = summary(model)
+summary_model
+```
+
+# Question 5
+Encoding:
+```{r}
+# Extracting analytical OLS standard errors
+ols_se = summary_model$coefficients[, "Std. Error"]
+
+# Implementing non-parametric bootstrap
+set.seed(123)  # Set seed for reproducibility
+B = 100       # Number of bootstrap repetitions
+# Creating a matrix to store bootstrap coefficients
+bootstrap_estimates = matrix(NA, nrow = B, ncol = length(coef(model)))  
+
+for (b in 1:B) {
+  # Resampling data indices with replacement
+  sample_indices = sample(1:nrow(blp_data), replace = TRUE)
+  bootstrap_sample = blp_data[sample_indices, ]
+  
+  # Fitting the model to the bootstrap sample
+  bootstrap_model = lm(delta_j ~ hpwt + air + mpd + space + price, data = bootstrap_sample)
+  
+  # Storing the estimated coefficients
+  bootstrap_estimates[b, ] = coef(bootstrap_model)
+}
+
+# Calculating bootstrap standard errors
+bootstrap_se = apply(bootstrap_estimates, 2, sd)
+
+# Creating a comparison table for OLS and bootstrap standard errors
+comparison = data.frame(
+  attribute = names(ols_se),
+  ols_se = ols_se,
+  bootstrap_se = bootstrap_se
+) %>% 
+  mutate(attribute = ifelse(attribute == "(Intercept)", "intercept", attribute))
+
+# Printing the comparison results
+comparison
+```

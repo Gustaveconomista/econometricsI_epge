@@ -1,5 +1,5 @@
 ---
-title: "PS1 - Econometrics  I"
+title: "PS1 - Econometrics I"
 author: "Gustavo Henrique and Bruno Tonholo"
 date: "`r Sys.Date()`"
 output: html_document

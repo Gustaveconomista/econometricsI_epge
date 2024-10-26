@@ -68,38 +68,38 @@ munic = munic %>%
 ## Step 4: Estimation
 
 ```{r}
-# Variáveis de interesse (equivalente ao "foreach" loop no Stata)
-vars = c("income", "gini", "latitude", "longitude", "illiter", "less4", "less8", "population91", "population00", "urbanization")
-
-# Loop para aplicar as operações para cada variável
-for (var in vars) {
-  # Exibir a soma da variável (equivalente ao sum `var' no Stata)
-  cat("Soma de", var, ":", sum(munic[[var]], na.rm = TRUE), "\n")
-  
-  # Seleção de largura de banda usando o método MSE-RD (mserd)
-  obw = rdbwselect(y = munic[[var]], x = munic$dep, kernel = "uniform", bwselect = "mserd")
-  cat("Largura de banda selecionada (MSE-RD) para", var, ":", obw$bws[1], "\n")
-  
-  # Regressão robusta com banda inferior à largura de banda selecionada (MSE-RD)
-  model1 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < obw$bws[1]))
-  cat("Regressão com largura de banda (MSE-RD) para", var, ":\n")
-  print(summary(model1))
-
-  # Regressão robusta com banda < 20000
-  model2 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 20000))
-  cat("Regressão com banda < 20000 para", var, ":\n")
-  print(summary(model2))
-
-  # Regressão robusta com banda < 10000
-  model3 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 10000))
-  cat("Regressão com banda < 10000 para", var, ":\n")
-  print(summary(model3))
-
-  # Regressão robusta com banda < 5000
-  model4 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 5000))
-  cat("Regressão com banda < 5000 para", var, ":\n")
-  print(summary(model4))
-}
+# # Variáveis de interesse (equivalente ao "foreach" loop no Stata)
+# vars = c("income", "gini", "latitude", "longitude", "illiter", "less4", "less8", "population91", "population00", "urbanization")
+# 
+# # Loop para aplicar as operações para cada variável
+# for (var in vars) {
+#   # Exibir a soma da variável (equivalente ao sum `var' no Stata)
+#   cat("Soma de", var, ":", sum(munic[[var]], na.rm = TRUE), "\n")
+#   
+#   # Seleção de largura de banda usando o método MSE-RD (mserd)
+#   obw = rdbwselect(y = munic[[var]], x = munic$dep, kernel = "uniform", bwselect = "mserd")
+#   cat("Largura de banda selecionada (MSE-RD) para", var, ":", obw$bws[1], "\n")
+#   
+#   # Regressão robusta com banda inferior à largura de banda selecionada (MSE-RD)
+#   model1 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < obw$bws[1]))
+#   cat("Regressão com largura de banda (MSE-RD) para", var, ":\n")
+#   print(summary(model1))
+# 
+#   # Regressão robusta com banda < 20000
+#   model2 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 20000))
+#   cat("Regressão com banda < 20000 para", var, ":\n")
+#   print(summary(model2))
+# 
+#   # Regressão robusta com banda < 10000
+#   model3 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 10000))
+#   cat("Regressão com banda < 10000 para", var, ":\n")
+#   print(summary(model3))
+# 
+#   # Regressão robusta com banda < 5000
+#   model4 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 5000))
+#   cat("Regressão com banda < 5000 para", var, ":\n")
+#   print(summary(model4))
+# }
 ```
 
 ## Step 5: Data visualization
