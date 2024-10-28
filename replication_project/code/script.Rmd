@@ -5,15 +5,10 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Step 1: Importing needed packages
 
 ```{r}
 pacman::p_load("tidyverse",
-               "haven",
                "estimatr",
                "stats",
                "fixest",
@@ -25,15 +20,19 @@ pacman::p_load("tidyverse",
                "rddtools",
                "here",
                "cowplot",
-               "scales")
+               "scales",
+               "stargazer",
+               "foreign",
+               "basedosdados",
+               "systemfit")
 ```
 
 ## Step 2: Loading databases
 
 ```{r}
-df_mun = read_dta(here("replication_project/data", "munic.dta"))
-df_state = read_dta(here("replication_project/data", "state.dta"))
-df_yearly = read_dta(here("replication_project/data", "yearly.dta"))
+df_mun = read.dta(here("replication_project/data", "munic.dta"))
+df_state = read.dta(here("replication_project/data", "state.dta"))
+df_yearly = read.dta(here("replication_project/data", "yearly.dta"))
 ```
 
 ## Step 3: Cleaning databases
@@ -65,45 +64,423 @@ munic = munic %>%
   ungroup()
 ```
 
-## Step 4: Estimation
-
+## Step 4: Generating tables
+# Table I
 ```{r}
-# # Variáveis de interesse (equivalente ao "foreach" loop no Stata)
-# vars = c("income", "gini", "latitude", "longitude", "illiter", "less4", "less8", "population91", "population00", "urbanization")
-# 
-# # Loop para aplicar as operações para cada variável
-# for (var in vars) {
-#   # Exibir a soma da variável (equivalente ao sum `var' no Stata)
-#   cat("Soma de", var, ":", sum(munic[[var]], na.rm = TRUE), "\n")
-#   
-#   # Seleção de largura de banda usando o método MSE-RD (mserd)
-#   obw = rdbwselect(y = munic[[var]], x = munic$dep, kernel = "uniform", bwselect = "mserd")
-#   cat("Largura de banda selecionada (MSE-RD) para", var, ":", obw$bws[1], "\n")
-#   
-#   # Regressão robusta com banda inferior à largura de banda selecionada (MSE-RD)
-#   model1 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < obw$bws[1]))
-#   cat("Regressão com largura de banda (MSE-RD) para", var, ":\n")
-#   print(summary(model1))
-# 
-#   # Regressão robusta com banda < 20000
-#   model2 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 20000))
-#   cat("Regressão com banda < 20000 para", var, ":\n")
-#   print(summary(model2))
-# 
-#   # Regressão robusta com banda < 10000
-#   model3 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 10000))
-#   cat("Regressão com banda < 10000 para", var, ":\n")
-#   print(summary(model3))
-# 
-#   # Regressão robusta com banda < 5000
-#   model4 = lmRob(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 5000))
-#   cat("Regressão com banda < 5000 para", var, ":\n")
-#   print(summary(model4))
-# }
+# Define variables and bandwidths
+covars = c("income", "gini", "latitude", "longitude", "illiter", "less4", "less8", "population91", "population00", "urbanization")
+ikbw = c(20000, 15596, 16547, 14531, 16068, 15415, 20000, 20000, 17668, 20000)
+obs = c(558, 377, 412, 345, 389, 372, 558, 558, 454, 558)
+ikbw_df = data.frame(covars, ikbw, obs)
+
+# Initialize lists to store coefficients and robust standard errors
+coef_list = list()
+se_list = list()
+intercept_list = list()
+intercept_se_list = list()
+
+# Calculate means and standard deviations for each variable
+mean_sd_list = list()
+
+# Loop through each variable and estimate models with three bandwidths
+for (i in 1:nrow(ikbw_df)) {
+  var = ikbw_df$covars[i]
+  
+  # Regression with IK optimal bandwidth
+  model1 = lm(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < ikbw_df$ikbw[i]))
+  robust1 = coeftest(model1, vcov = vcovHC(model1, type = "HC1"))
+  coef_list[[paste0(var, "_bw1")]] = robust1["treat", "Estimate"]
+  se_list[[paste0(var, "_bw1")]] = robust1["treat", "Std. Error"]
+  intercept_list[[paste0(var, "_bw1")]] = robust1["(Intercept)", "Estimate"]
+  intercept_se_list[[paste0(var, "_bw1")]] = robust1["(Intercept)", "Std. Error"]
+  
+  # Regression with bandwidth < 10000
+  model2 = lm(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 10000))
+  robust2 = coeftest(model2, vcov = vcovHC(model2, type = "HC1"))
+  coef_list[[paste0(var, "_bw2")]] = robust2["treat", "Estimate"]
+  se_list[[paste0(var, "_bw2")]] = robust2["treat", "Std. Error"]
+  
+  # Regression with bandwidth < 5000
+  model3 = lm(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 5000))
+  robust3 = coeftest(model3, vcov = vcovHC(model3, type = "HC1"))
+  coef_list[[paste0(var, "_bw3")]] = robust3["treat", "Estimate"]
+  se_list[[paste0(var, "_bw3")]] = robust3["treat", "Std. Error"]
+  
+  # Calculate mean and standard deviation for the variable
+  mean_val = mean(munic[[var]], na.rm = TRUE)
+  sd_val = sd(munic[[var]], na.rm = TRUE)
+  mean_sd_list[[var]] = c(mean_val, sd_val)
+}
+
+# Create a matrix to display in stargazer
+output_table = matrix("", nrow = length(covars) * 2 + 2, ncol = 7)
+
+# Fill the first column with variable names, "bandwidth", and "obs"
+output_table[seq(1, length(covars) * 2, 2), 1] = covars
+output_table[length(covars) * 2 + 1, 1] = "bandwidth"
+output_table[length(covars) * 2 + 2, 1] = "obs"
+
+# Fill the remaining columns with coefficients, robust standard errors, means, standard deviations, bandwidths, and observations
+for (j in 1:length(covars)) {
+  var = covars[j]
+  
+  # Fill coefficients and robust standard errors for each specification
+  output_table[2 * j - 1, 3] = sprintf("%.3f", intercept_list[[paste0(var, "_bw1")]])
+  output_table[2 * j, 3] = sprintf("(%.3f)", intercept_se_list[[paste0(var, "_bw1")]])
+  
+  output_table[2 * j - 1, 5] = sprintf("%.3f", coef_list[[paste0(var, "_bw1")]])
+  output_table[2 * j, 5] = sprintf("(%.3f)", se_list[[paste0(var, "_bw1")]])
+  
+  output_table[2 * j - 1, 6] = sprintf("%.3f", coef_list[[paste0(var, "_bw2")]])
+  output_table[2 * j, 6] = sprintf("(%.3f)", se_list[[paste0(var, "_bw2")]])
+  
+  output_table[2 * j - 1, 7] = sprintf("%.3f", coef_list[[paste0(var, "_bw3")]])
+  output_table[2 * j, 7] = sprintf("(%.3f)", se_list[[paste0(var, "_bw3")]])
+  
+  # Fill mean and standard deviation
+  output_table[2 * j - 1, 2] = sprintf("%.3f", mean_sd_list[[var]][1])
+  output_table[2 * j, 2] = sprintf("(%.3f)", mean_sd_list[[var]][2])
+  
+  # Fill ikbw and obs
+  output_table[2 * j - 1, 4] = ikbw_df$ikbw[j]
+  output_table[2 * j, 4] = ikbw_df$obs[j]
+}
+
+# Add bandwidth and observations to the last two rows
+output_table[length(covars) * 2 + 1, 2:7] = c("—", "—", "—", "IKBW", "10000", "5000")
+output_table[length(covars) * 2 + 2, 2:7] = c("5281", "—", "—", "—", "229", "116")
+
+# Convert the matrix to a data frame and set column names
+output_df = as.data.frame(output_table)
+colnames(output_df) = c("", "Mean (SD)", "Pre-Treat. (SE)", "IKBW (Obs)", "(1)", "(2)", "(3)")
+
+# Display the table with stargazer
+stargazer(
+  output_df,
+  type = "text",
+  summary = FALSE,
+  title = "Table I",
+  rownames = FALSE
+)
+```
+
+# Table II - Panels A & B
+```{r}
+# Define variables and bandwidths
+vars = c("r_util98", "attend", "regist", "r_util94", "r_util02")
+ikbw = c(11873, 12438, 15956, 17111, 17204)
+obs = c(265, 283, 388, 433, 437)
+ikbw_df = data.frame(vars, ikbw, obs)
+
+# Initialize lists to store coefficients and robust standard errors
+coef_list = list()
+se_list = list()
+intercept_list = list()
+intercept_se_list = list()
+
+# Calculate means and standard deviations for each variable
+mean_sd_list = list()
+
+# Loop through each variable and estimate models with three bandwidths
+for (i in 1:nrow(ikbw_df)) {
+  var = ikbw_df$vars[i]
+  
+  # Regression with IK optimal bandwidth
+  model1 = lm(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < ikbw_df$ikbw[i]))
+  robust1 = coeftest(model1, vcov = vcovHC(model1, type = "HC1"))
+  coef_list[[paste0(var, "_bw1")]] = robust1["treat", "Estimate"]
+  se_list[[paste0(var, "_bw1")]] = robust1["treat", "Std. Error"]
+  intercept_list[[paste0(var, "_bw1")]] = robust1["(Intercept)", "Estimate"]
+  intercept_se_list[[paste0(var, "_bw1")]] = robust1["(Intercept)", "Std. Error"]
+  
+  # Regression with bandwidth < 10000
+  model2 = lm(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 10000))
+  robust2 = coeftest(model2, vcov = vcovHC(model2, type = "HC1"))
+  coef_list[[paste0(var, "_bw2")]] = robust2["treat", "Estimate"]
+  se_list[[paste0(var, "_bw2")]] = robust2["treat", "Std. Error"]
+  
+  # Regression with bandwidth < 5000
+  model3 = lm(as.formula(paste(var, "~ treat + dep + deptreat")), data = subset(munic, bw < 5000))
+  robust3 = coeftest(model3, vcov = vcovHC(model3, type = "HC1"))
+  coef_list[[paste0(var, "_bw3")]] = robust3["treat", "Estimate"]
+  se_list[[paste0(var, "_bw3")]] = robust3["treat", "Std. Error"]
+  
+  # Calculate mean and standard deviation for the variable
+  mean_val = mean(munic[[var]], na.rm = TRUE)
+  sd_val = sd(munic[[var]], na.rm = TRUE)
+  mean_sd_list[[var]] = c(mean_val, sd_val)
+}
+
+# Create a matrix to display in stargazer
+output_table = matrix("", nrow = length(vars) * 2 + 2, ncol = 7)
+
+# Fill the first column with variable names, "bandwidth", and "obs"
+output_table[seq(1, length(vars) * 2, 2), 1] = vars
+output_table[length(vars) * 2 + 1, 1] = "bandwidth"
+output_table[length(vars) * 2 + 2, 1] = "obs"
+
+# Fill the remaining columns with coefficients, robust standard errors, means, standard deviations, bandwidths, and observations
+for (j in 1:length(vars)) {
+  var = vars[j]
+  
+  # Fill coefficients and robust standard errors for each specification
+  output_table[2 * j - 1, 3] = sprintf("%.3f", intercept_list[[paste0(var, "_bw1")]])
+  output_table[2 * j, 3] = sprintf("(%.3f)", intercept_se_list[[paste0(var, "_bw1")]])
+  
+  output_table[2 * j - 1, 5] = sprintf("%.3f", coef_list[[paste0(var, "_bw1")]])
+  output_table[2 * j, 5] = sprintf("(%.3f)", se_list[[paste0(var, "_bw1")]])
+  
+  output_table[2 * j - 1, 6] = sprintf("%.3f", coef_list[[paste0(var, "_bw2")]])
+  output_table[2 * j, 6] = sprintf("(%.3f)", se_list[[paste0(var, "_bw2")]])
+  
+  output_table[2 * j - 1, 7] = sprintf("%.3f", coef_list[[paste0(var, "_bw3")]])
+  output_table[2 * j, 7] = sprintf("(%.3f)", se_list[[paste0(var, "_bw3")]])
+  
+  # Fill mean and standard deviation
+  output_table[2 * j - 1, 2] = sprintf("%.3f", mean_sd_list[[var]][1])
+  output_table[2 * j, 2] = sprintf("(%.3f)", mean_sd_list[[var]][2])
+  
+  # Fill ikbw and obs
+  output_table[2 * j - 1, 4] = ikbw_df$ikbw[j]
+  output_table[2 * j, 4] = ikbw_df$obs[j]
+}
+
+# Add bandwidth and observations to the last two rows
+output_table[length(vars) * 2 + 1, 2:7] = c("—", "—", "—", "IKBW", "10000", "5000")
+output_table[length(vars) * 2 + 2, 2:7] = c("5281", "—", "—", "—", "229", "116")
+
+# Convert the matrix to a data frame and set column names
+output_df = as.data.frame(output_table)
+colnames(output_df) = c("", "Mean (SD)", "Pre-Treat. (SE)", "IKBW (Obs)", "(1)", "(2)", "(3)")
+
+# Display the table with stargazer
+stargazer(
+  output_df,
+  type = "text",
+  summary = FALSE,
+  title = "Table II - Panels A & B",
+  rownames = FALSE
+)
+```
+
+# Table II - Panel C
+```{r}
+# Define objects
+y = "right"
+x = c("right_meas", "right_state")
+ikbw = c(20000, 10000, 5000)
+obs = c(558, 229, 116)
+ikbw_df = data.frame(ikbw, obs)
+
+# Create the formula for the regression
+formula = as.formula(paste(y, "~ treat +", paste(x, collapse = " + "), "+ dep + deptreat"))
+
+# Initialize lists to store coefficients and robust standard errors
+coef_list = list()
+se_list = list()
+intercept_list = list()
+intercept_se_list = list()
+
+# Calculate means and standard deviations for each variable
+mean_sd_list = list()
+
+# Regression with IK optimal bandwidth
+model1 = lm(formula, data = subset(munic, dep > -20000 & dep < 20000))
+clustered1 = coeftest(model1, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(y, "_bw1")]] = clustered1["treat", "Estimate"]
+se_list[[paste0(y, "_bw1")]] = clustered1["treat", "Std. Error"]
+intercept_list[[paste0(y, "_bw1")]] = clustered1["(Intercept)", "Estimate"]
+intercept_se_list[[paste0(y, "_bw1")]] = clustered1["(Intercept)", "Std. Error"]
+
+# Regression with bandwidth < 10000
+model2 = lm(formula, data = subset(munic, dep > -10000 & dep < 10000))
+clustered2 = coeftest(model2, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(y, "_bw2")]] = clustered2["treat", "Estimate"]
+se_list[[paste0(y, "_bw2")]] = clustered2["treat", "Std. Error"]
+
+# Regression with bandwidth < 5000
+model3 = lm(formula, data = subset(munic, dep > -5000 & dep < 5000))
+clustered3 = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(y, "_bw3")]] = clustered3["treat", "Estimate"]
+se_list[[paste0(y, "_bw3")]] = clustered3["treat", "Std. Error"]
+
+# Calculate mean and standard deviation for the variable
+mean_val = mean(munic[[y]], na.rm = TRUE)
+sd_val = sd(munic[[y]], na.rm = TRUE)
+mean_sd_list[[y]] = c(mean_val, sd_val)
+
+
+# Create a matrix to display in stargazer
+output_table = matrix("", nrow = 1*2+2, ncol = 7)
+
+# Fill the first column with variable names, "bandwidth", and "obs"
+output_table[1, 1] = y
+output_table[3, 1] = "bandwidth"
+output_table[4, 1] = "obs"
+
+# Fill coefficients and robust standard errors for each specification
+output_table[1, 3] = sprintf("%.3f", intercept_list[[paste0(y, "_bw1")]])
+output_table[2, 3] = sprintf("(%.3f)", intercept_se_list[[paste0(y, "_bw1")]])
+
+output_table[1, 5] = sprintf("%.3f", coef_list[[paste0(y, "_bw1")]])
+output_table[2, 5] = sprintf("(%.3f)", se_list[[paste0(y, "_bw1")]])
+
+output_table[1, 6] = sprintf("%.3f", coef_list[[paste0(y, "_bw2")]])
+output_table[2, 6] = sprintf("(%.3f)", se_list[[paste0(y, "_bw2")]])
+
+output_table[1, 7] = sprintf("%.3f", coef_list[[paste0(y, "_bw3")]])
+output_table[2, 7] = sprintf("(%.3f)", se_list[[paste0(y, "_bw3")]])
+
+# Fill mean and standard deviation
+output_table[1, 2] = sprintf("%.3f", mean_sd_list[[y]][1])
+output_table[2, 2] = sprintf("(%.3f)", mean_sd_list[[y]][2])
+
+# Fill ikbw and obs
+output_table[1, 4] = ikbw_df$ikbw[1]
+output_table[2, 4] = ikbw_df$obs[1]
+for (j in 2:nrow(ikbw_df)) {
+  output_table[3, j + 4] = ikbw_df$ikbw[j]
+  output_table[4, j + 4] = ikbw_df$obs[j]
+}
+
+# Add bandwidth and observations to the last two rows
+output_table[3, 2:5] = c("—", "—", "—", "IKBW")
+output_table[4, 2:5] = c("5281", "—", "—", "—")
+
+# Convert the matrix to a data frame and set column names
+output_df = as.data.frame(output_table)
+colnames(output_df) = c("", "Mean (SD)", "Pre-Treat. (SE)", "IKBW (Obs)", "(1)", "(2)", "(3)")
+
+# Display the table with stargazer
+stargazer(
+  output_df,
+  type = "text",
+  summary = FALSE,
+  title = "Table II - Panel C",
+  rownames = FALSE
+)
+```
+
+# Table III
+```{r}
+# Define variables and data preparation
+y = "r_util98"
+x = c("treat", "dep", "deptreat")
+med = 25.43
+ikbw = c(11873, 20000, 10000, 5000)
+obs_above = c(116, 279, 103, 49)
+obs_below = c(149, 279, 126, 67)
+ikbw_df = data.frame(ikbw, obs_above, obs_below)
+
+# Initialize lists for results
+coef_list = list()
+se_list = list()
+intercept_list = list()
+intercept_se_list = list()
+te_results = list()  # Store test results for equality
+
+# Function for regression under different conditions
+run_regression = function(data, formula) {
+  model = lm(formula, data = data)
+  robust = coeftest(model, vcov = vcovHC(model, type = "HC1"))
+  list(estimate = robust["treat", "Estimate"], se = robust["treat", "Std. Error"],
+       intercept = robust["(Intercept)", "Estimate"], intercept_se = robust["(Intercept)", "Std. Error"])
+}
+
+# Run regressions for each bandwidth and store results
+for (i in 1:nrow(ikbw_df)) {
+  data_above = subset(munic, dep > -ikbw_df$ikbw[i] & dep < ikbw_df$ikbw[i] & illiter > med)
+  data_below = subset(munic, dep > -ikbw_df$ikbw[i] & dep < ikbw_df$ikbw[i] & illiter < med)
+  formula = as.formula(paste(y, "~", paste(x, collapse = " + ")))
+  
+  # Run regressions for both groups
+  result_above = run_regression(data_above, formula)
+  result_below = run_regression(data_below, formula)
+  
+  # Store results for "illiter > med" condition
+  coef_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_above")]] = result_above$estimate
+  se_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_above")]] = result_above$se
+  intercept_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_above")]] = result_above$intercept
+  intercept_se_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_above")]] = result_above$intercept_se
+  
+  # Store results for "illiter < med" condition
+  coef_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_below")]] = result_below$estimate
+  se_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_below")]] = result_below$se
+  intercept_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_below")]] = result_below$intercept
+  intercept_se_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_below")]] = result_below$intercept_se
+  
+  # Calculating the test of equality
+  te = result_above$estimate - result_below$estimate
+  se_te = sqrt((result_above$se)^2 + (result_below$se)^2)
+  
+  # Calculating p-value
+  z_score = te/se_te
+  p_value = 2*(1-pnorm(abs(z_score)))
+  
+  # Storing the result
+  te_results[[paste0("bw_", ikbw_df$ikbw[i])]] = list(
+    difference = te,
+    standard_error = se_te,
+    p_value = p_value
+  )
+}
+
+# Create output table similar to the Stata script
+output_table = matrix("", nrow = 8, ncol = 7)
+output_table[1, 1] = y
+output_table[3, 1] = "obs above"
+output_table[6, 1] = "obs below"
+output_table[7, 1] = "TEs (p-value)"
+output_table[8, 1] = "bandwidth"
+
+# Populate coefficients and standard errors for each bandwidth condition
+for (i in 1:nrow(ikbw_df)) {
+  output_table[1, i + 3] = sprintf("%.3f", coef_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_above")]])
+  output_table[2, i + 3] = sprintf("(%.3f)", se_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_above")]])
+  output_table[4, i + 3] = sprintf("%.3f", coef_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_below")]])
+  output_table[5, i + 3] = sprintf("(%.3f)", se_list[[paste0(y, "_bw", ikbw_df$ikbw[i], "_below")]])
+}
+# Fill coefficients intercepts and standard errors
+output_table[1, 2] = sprintf("%.3f", intercept_list[[paste0(y, "_bw", ikbw_df$ikbw[1], "_above")]])
+output_table[2, 2] = sprintf("(%.3f)", intercept_se_list[[paste0(y, "_bw", ikbw_df$ikbw[1], "_above")]])
+output_table[4, 2] = sprintf("%.3f", intercept_list[[paste0(y, "_bw", ikbw_df$ikbw[1], "_below")]])
+output_table[5, 2] = sprintf("(%.3f)", intercept_se_list[[paste0(y, "_bw", ikbw_df$ikbw[1], "_below")]])
+
+# Fill IKBW
+output_table[1, 3] = ikbw_df$ikbw[1]
+output_table[4, 3] = ikbw_df$ikbw[1]
+
+# Add bandwidth and observation counts
+output_table[3, 2:3] = c("—", "—")
+output_table[6:8, 2:3] = c("—", "—")
+for (j in 1:nrow(ikbw_df)) {
+  output_table[3, j + 3] = ikbw_df$obs_above[j]
+  output_table[6, j + 3] = ikbw_df$obs_below[j]
+}
+output_table[8, 2:7] = c("—", "—", "IKBW", "20000", "10000", "5000")
+
+# Fill equality test's p-values
+output_table[7, 4] = round(te_results$bw_11873$p_value, 3)
+output_table[7, 5] = round(te_results$bw_20000$p_value, 3)
+output_table[7, 6] = round(te_results$bw_10000$p_value, 3)
+output_table[7, 7] = round(te_results$bw_5000$p_value, 3)
+
+# Convert to data frame for stargazer output
+output_df = as.data.frame(output_table)
+colnames(output_df) = c("", "Pre-Treat. (SE)", "IKBW (Obs)", "(1)", "(2)", "(3)", "(4)")
+
+# Display the table with stargazer
+stargazer(
+  output_df,
+  type = "text",
+  summary = FALSE,
+  title = "Table II - Panel C",
+  rownames = FALSE
+)
 ```
 
 ## Step 5: Data visualization
-
+# Figures 2 & 3
 ```{r, warning=FALSE}
 # Figure 2 - scatter plots with quadratic fits
 plot_main1 = ggplot(munic %>% filter(voters96 < 100000, voters96 > 4500), aes(x = bin_voters96)) +
