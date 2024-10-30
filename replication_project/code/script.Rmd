@@ -1516,6 +1516,9 @@ state_coord = left_join(state_df, data, by = c("name_state" = "ADMIN_NAME"))
 ev_coord = read_dta(here("replication_project/data", "ev_coord.dta"))
 ev_sf = ev_coord %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326, remove = F)
+no_axis = theme(axis.title=element_blank(),
+                 axis.text=element_blank(),
+                 axis.ticks=element_blank())
 ggplot() +
   geom_sf(data = state_coord, aes(fill=inst_c), color= "black", size=.15) +
   labs(subtitle="Share of electorate using electronic voting: 1998 election", size=8) +
