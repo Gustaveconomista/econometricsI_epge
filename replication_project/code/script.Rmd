@@ -485,7 +485,7 @@ stargazer(
 )
 ```
 
-# Table IV - Panels A & B
+# Table IV
 ```{r}
 df_state = df_state %>%
   # Generate d_inst and l_inst
@@ -500,19 +500,20 @@ df_state = df_state %>%
     d_right = c(NA, diff(right)),
     d_ag_ltotal = c(NA, diff(ag_ltotal)),
     d_ag_ssaude = c(NA, diff(ag_ssaude)),
-    d_ag_lsaude = c(NA, diff(ag_lsaude))
+    d_ag_lsaude = c(NA, diff(ag_lsaude)),
+    d_ag_vis7_ined2 = c(NA, diff(ag_vis7_ined2)),
+    d_ag_lb_ined = c(NA, diff(ag_lb_ined))
   ) %>%
   # Replace rest_inst for the year 2002
   mutate(rest_inst = ifelse(year == 2002, (l_inst - d_inst), rest_inst))
-var_list0 = c("util_rate", "right", "ag_ltotal", "ag_ssaude", "ag_lsaude")
-var_list1 = c("d_util_rate", "d_right", "d_ag_ltotal", "d_ag_ssaude", "d_ag_lsaude")
+var_list0 = c("util_rate", "right", "ag_ltotal", "ag_ssaude", "ag_lsaude", "ag_vis7_ined2", "ag_lb_ined")
+var_list1 = c("d_util_rate", "d_right", "d_ag_ltotal", "d_ag_ssaude", "d_ag_lsaude", "d_ag_vis7_ined2", "d_ag_lb_ined")
 var_list2 = c("d_inst98e", "d_inst02e", "inst", "rest_inst")
 # Calculate means and standard deviations for each variable
 coef_list = list()
 se_list = list()
 p_value_list = list()
 mean_sd_list = list()
-lc_list = list()
 
 # Calculate mean and standard deviation for the variable
 for (var in var_list0) {
@@ -520,20 +521,39 @@ for (var in var_list0) {
   sd_val = sd(df_state[[var]], na.rm = TRUE)
   mean_sd_list[[var]] = c(mean_val, sd_val)
 }
-covars = colnames(df_state %>% 
-  select(starts_with("reg") | starts_with("delec") | starts_with("duf")))
+mean_sd_list$ag_lb_ined = (mean_sd_list$ag_lb_ined)*100
+
+covars = c("ag_vis_ined_cover", "ag_lb_ined_cover", colnames(df_state %>% 
+  select(starts_with("reg") | starts_with("delec") | starts_with("duf"))))
 # Filter data for the specified year
 data_filtered = df_state %>%
   filter(year == 1998)
   
 # Fit regression model with the specified dependent variable and predictors
-model1 = lm(as.formula(paste0(var_list2[1], "~", paste0(covars[1:23], collapse = " + "))), data = data_filtered)
+model1 = lm(as.formula(paste0(var_list2[1], "~", paste0(covars[3:25], collapse = " + "))), data = data_filtered)
   
 data_filtered$z = residuals(model1)
   
-for (i in 1:length(var_list1)) {
+for (i in 1:length(var_list1[1:5])) {
   var = var_list1[i]
-  model2 = lm(as.formula(paste(var, "~", paste(covars[1:23], collapse = " + "))), 
+  model2 = lm(as.formula(paste(var, "~", paste(covars[3:25], collapse = " + "))), 
+           data = data_filtered)
+  data_filtered$y_z = residuals(model2)
+  model3 = lm(y_z ~ z, data = data_filtered)
+  clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+  coef_list[[paste0(var, "98")]] = clustered["z", "Estimate"]
+  se_list[[paste0(var, "98")]] = clustered["z", "Std. Error"]
+  p_value_list[[paste0(var, "98")]] = clustered["z", "Pr(>|t|)"]
+}
+
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[1], "~", paste0(covars[c(1, 3:25)], collapse = " + "))), data = data_filtered)
+  
+data_filtered$z = residuals(model1)
+  
+for (i in 6:length(var_list1)) {
+  var = var_list1[i]
+  model2 = lm(as.formula(paste(var, "~", paste(covars[c(1, 3:25)], collapse = " + "))), 
            data = data_filtered)
   data_filtered$y_z = residuals(model2)
   model3 = lm(y_z ~ z, data = data_filtered)
@@ -547,13 +567,13 @@ data_filtered = df_state %>%
   filter(year == 2002)
   
 # Fit regression model with the specified dependent variable and predictors
-model1 = lm(as.formula(paste0(var_list2[2], "~", paste0(covars[1:23], collapse = " + "))), data = data_filtered)
+model1 = lm(as.formula(paste0(var_list2[2], "~", paste0(covars[3:25], collapse = " + "))), data = data_filtered)
   
 data_filtered$z = residuals(model1)
   
 for (i in 1:length(var_list1)) {
   var = var_list1[i]
-  model2 = lm(as.formula(paste(var, "~", paste(covars[1:23], collapse = " + "))), 
+  model2 = lm(as.formula(paste(var, "~", paste(covars[3:25], collapse = " + "))), 
            data = data_filtered)
   data_filtered$y_z = residuals(model2)
   model3 = lm(y_z ~ z, data = data_filtered)
@@ -564,13 +584,13 @@ for (i in 1:length(var_list1)) {
 }
 
 # Fit regression model with the specified dependent variable and predictors
-model1 = lm(as.formula(paste0(var_list2[3], "~", paste0(covars, collapse = " + "))), data = df_state)
+model1 = lm(as.formula(paste0(var_list2[3], "~", paste0(covars[3:52], collapse = " + "))), data = df_state)
   
 df_state$z = residuals(model1)
   
 for (i in 1:length(var_list0)) {
   var = var_list0[i]
-  model2 = lm(as.formula(paste(var, "~", paste(covars, collapse = " + "))), 
+  model2 = lm(as.formula(paste(var, "~", paste(covars[3:52], collapse = " + "))), 
            data = df_state)
   df_state$y_z = residuals(model2)
   model3 = lm(y_z ~ z, data = df_state)
@@ -581,13 +601,13 @@ for (i in 1:length(var_list0)) {
 }
 
 # Fit regression model with the specified dependent variable and predictors
-model1 = lm(as.formula(paste0(var_list2[4], "~", paste0(covars, collapse = " + "))), data = df_state)
+model1 = lm(as.formula(paste0(var_list2[4], "~", paste0(covars[3:52], collapse = " + "))), data = df_state)
   
 df_state$z = residuals(model1)
   
 for (i in 1:length(var_list0)) {
   var = var_list0[i]
-  model2 = lm(as.formula(paste(var, "~", paste(covars, collapse = " + "))), 
+  model2 = lm(as.formula(paste(var, "~", paste(covars[3:52], collapse = " + "))), 
            data = df_state)
   df_state$y_z = residuals(model2)
   model3 = lm(y_z ~ z, data = df_state)
@@ -597,11 +617,144 @@ for (i in 1:length(var_list0)) {
   p_value_list[[paste0(var, "_sum")]] = clustered["z", "Pr(>|t|)"]
 }
 
+# Panel C
+data_filtered = df_state %>%
+  filter(year == 1998)
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[1], "~", paste0(covars[c(1, 3:25)], collapse = " + "))), data = data_filtered)
+  
+data_filtered$z = residuals(model1)
+  
+var = var_list1[6]
+model2 = lm(as.formula(paste(var, "~", paste(covars[c(1, 3:25)], collapse = " + "))), 
+         data = data_filtered)
+data_filtered$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = data_filtered)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "98")]] = clustered["z", "Estimate"]
+se_list[[paste0(var, "98")]] = clustered["z", "Std. Error"]
+p_value_list[[paste0(var, "98")]] = clustered["z", "Pr(>|t|)"]
+
+
+data_filtered = df_state %>%
+  filter(year == 2002)
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[2], "~", paste0(covars[c(1, 3:25)], collapse = " + "))), data = data_filtered)
+  
+data_filtered$z = residuals(model1)
+  
+var = var_list1[6]
+model2 = lm(as.formula(paste(var, "~", paste(covars[c(1, 3:25)], collapse = " + "))), 
+         data = data_filtered)
+data_filtered$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = data_filtered)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "02")]] = clustered["z", "Estimate"]
+se_list[[paste0(var, "02")]] = clustered["z", "Std. Error"]
+p_value_list[[paste0(var, "02")]] = clustered["z", "Pr(>|t|)"]
+
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[3], "~", paste0(covars[c(1, 3:52)], collapse = " + "))), data = df_state)
+  
+df_state$z = residuals(model1)
+  
+var = var_list0[6]
+model2 = lm(as.formula(paste(var, "~", paste(covars[c(1, 3:52)], collapse = " + "))), 
+         data = df_state)
+df_state$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = df_state)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "_diff")]] = clustered["z", "Estimate"]
+se_list[[paste0(var, "_diff")]] = clustered["z", "Std. Error"]
+p_value_list[[paste0(var, "_diff")]] = clustered["z", "Pr(>|t|)"]
+
+
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[4], "~", paste0(covars[c(1, 3:52)], collapse = " + "))), data = df_state)
+  
+df_state$z = residuals(model1)
+  
+var = var_list0[6]
+model2 = lm(as.formula(paste(var, "~", paste(covars[c(1, 3:52)], collapse = " + "))), 
+       data = df_state)
+df_state$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = df_state)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "_sum")]] = clustered["z", "Estimate"]
+se_list[[paste0(var, "_sum")]] = clustered["z", "Std. Error"]
+p_value_list[[paste0(var, "_sum")]] = clustered["z", "Pr(>|t|)"]
+
+data_filtered = df_state %>%
+  filter(year == 1998)
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[1], "~", paste0(covars[2:25], collapse = " + "))), data = data_filtered)
+  
+data_filtered$z = residuals(model1)
+  
+
+var = var_list1[7]
+model2 = lm(as.formula(paste(var, "~", paste(covars[2:25], collapse = " + "))), 
+         data = data_filtered)
+data_filtered$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = data_filtered)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "98")]] = (clustered["z", "Estimate"])*100
+se_list[[paste0(var, "98")]] = (clustered["z", "Std. Error"])*100
+p_value_list[[paste0(var, "98")]] = clustered["z", "Pr(>|t|)"]
+
+data_filtered = df_state %>%
+  filter(year == 2002)
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[2], "~", paste0(covars[2:25], collapse = " + "))), data = data_filtered)
+  
+data_filtered$z = residuals(model1)
+  
+var = var_list1[7]
+model2 = lm(as.formula(paste(var, "~", paste(covars[2:25], collapse = " + "))), 
+         data = data_filtered)
+data_filtered$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = data_filtered)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "02")]] = (clustered["z", "Estimate"])*100
+se_list[[paste0(var, "02")]] = (clustered["z", "Std. Error"])*100
+p_value_list[[paste0(var, "02")]] = clustered["z", "Pr(>|t|)"]
+
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[3], "~", paste0(covars[2:52], collapse = " + "))), data = df_state)
+  
+df_state$z = residuals(model1)
+  
+var = var_list0[7]
+model2 = lm(as.formula(paste(var, "~", paste(covars[2:52], collapse = " + "))), 
+         data = df_state)
+df_state$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = df_state)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "_diff")]] = (clustered["z", "Estimate"])*100
+se_list[[paste0(var, "_diff")]] = (clustered["z", "Std. Error"])*100
+p_value_list[[paste0(var, "_diff")]] = clustered["z", "Pr(>|t|)"]
+
+
+# Fit regression model with the specified dependent variable and predictors
+model1 = lm(as.formula(paste0(var_list2[4], "~", paste0(covars[2:52], collapse = " + "))), data = df_state)
+  
+df_state$z = residuals(model1)
+  
+var = var_list0[7]
+model2 = lm(as.formula(paste(var, "~", paste(covars[2:52], collapse = " + "))), 
+       data = df_state)
+df_state$y_z = residuals(model2)
+model3 = lm(y_z ~ z, data = df_state)
+clustered = coeftest(model3, vcov = vcovCL, cluster = ~ uf)
+coef_list[[paste0(var, "_sum")]] = (clustered["z", "Estimate"])*100
+se_list[[paste0(var, "_sum")]] = (clustered["z", "Std. Error"])*100
+p_value_list[[paste0(var, "_sum")]] = clustered["z", "Pr(>|t|)"]
+
 # Create a matrix to display in stargazer
-output_table = matrix("", nrow = 15, ncol = 6)
+output_table = matrix("", nrow = 23, ncol = 6)
 
 # Fill the first column with variable names, "bandwidth", and "obs"
-output_table[seq(1, length(var_list1)*3, 3), 1] = var_list1
+output_table[seq(1, length(var_list0)*3, 3), 1] = var_list0
 for (j in 1:length(var_list1)) {
   var = var_list1[j]
   var2 = var_list0[j]
@@ -628,7 +781,15 @@ for (j in 1:length(var_list1)) {
   output_table[3*j - 2, 2] = sprintf("%.3f", mean_sd_list[[var2]][1])
   output_table[3*j - 1, 2] = sprintf("(%.3f)", mean_sd_list[[var2]][2])
 }
+output_table[c(7, 13), 2] = c("—", "—")
+output_table[c(8, 14), 2] = c("", "")
+output_table[22, 1] = "N (State-Terms)"
+output_table[23, 1] = "N (State/1st Diffs)"
+output_table[22, 2:6] = c("—", "54", "54", "—", "—")
+output_table[23, 2:6] = c("—", "27", "27", "—", "—")
+
 # Convert to data frame for stargazer output
+
 output_df = as.data.frame(output_table)
 colnames(output_df) = c("", "Sample Avg.", "Paper-Disc.", "Disc.-Electr.", "Linear Comb. 1", "Linear Comb. 2")
 
@@ -637,7 +798,7 @@ stargazer(
   output_df,
   type = "text",
   summary = FALSE,
-  title = "Table II - Panel C",
+  title = "Table IV",
   rownames = FALSE
 )
 ```
