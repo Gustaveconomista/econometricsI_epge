@@ -93,9 +93,13 @@ electronic voting’s introduction.
 
 ![](figure_2.png)
 
+![](figure_2_replication.png)
+
 #### Figure 3
 
 ![](figure_3.png)
+
+![](figure_3_replication.png)
 
 ### Tables {.tabset}
 
@@ -103,13 +107,18 @@ electronic voting’s introduction.
 
 ![](table_1.png)
 
+![](table_1_replication.png)
+
 #### Table 2
 
 ![](table_2.png)
+![](table_2_replication_A&B.png)
+![](table_2_replication_C.png)
 
 #### Table 3
 
 ![](table_3.png)
+![](table_3_replication.png)
 
 #### Table 4
 

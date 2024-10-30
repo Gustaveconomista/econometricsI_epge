@@ -474,7 +474,7 @@ stargazer(
   output_df,
   type = "text",
   summary = FALSE,
-  title = "Table II - Panel C",
+  title = "Table III",
   rownames = FALSE
 )
 ```
