@@ -77,6 +77,33 @@ electronic voting’s introduction.
 
 - Re-estimate the effects with controls for possible (nonlinear) time trends interacted with state characteristics, to test the possibility that the results are not driven by another shock with heterogeneous effect across states.
 
+### Estimated Equations
+
+- Let $Si$ denote the share of voters in state $i$ that reside in municipalities above the cutoff in the 1998 election.
+
+- Let $electro_{ie}$ denote the share of voters using EV in state $i$ at an election held at year $e$.
+
+- $electro_{i1998} − electro_{i1994} = Si$.
+
+- $electro_{i2002} − electro_{i1998} = 1 - Si$.
+
+- Let $y_{ie}$ denote an outcome for state i at the legislative term elected at year e (e.g., $y_{i98}$ is the outcome observed during the 1999–2002 legislative term). We have:
+
+- $\Delta y_{i98} = y_{i98} − y_{i94}$.
+
+- $\Delta y_{i98} = \alpha_{98} + \theta_{98}S_i + \beta_{98}X_{i02} + \varepsilon_{i98}$.
+
+- $\Delta y_{i02} = \alpha_{02} + \theta_{02}S_i + \beta_{02}X_{i02} + \varepsilon_{i02}$.
+
+- $\theta^{98}$: measures the effect of $S_i$ on the change in average $y_{ie}$ between the 1995–1998 and 1999–2002 legislative terms.
+
+- $\theta^{02}$: measures the effect of $1 - S_i$ on the change in average $y_{ie}$ between the 1999–2002 and 2003–2006 legislative terms.
+
+- So, the author takes evidence that $\theta^{98} = -\theta^{02} \equiv \theta$ as an indication that $\theta$ measures the causal effect of EV.
+
+- $y_{ie} = \alpha_e + \theta_{Si} \cdot Term_{e}^{98} + \gamma_i + \beta X_{ie} + \epsilon_{ie}$.
+
+
 ### Timeline
 
 ![](timeline.png)
@@ -128,10 +155,12 @@ electronic voting’s introduction.
 #### Table 5
 
 ![](table_5.png)
+![](table_5_replication.png)
 
 #### Table 6
 
 ![](table_6.png)
+![](table_6_replication.png)
 
 ## 4 - Conclusion
 
