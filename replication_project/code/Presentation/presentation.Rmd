@@ -123,6 +123,7 @@ electronic voting’s introduction.
 #### Table 4
 
 ![](table_4.png)
+![](table_4_replication.png)
 
 #### Table 5
 
