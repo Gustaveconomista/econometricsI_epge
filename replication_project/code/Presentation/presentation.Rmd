@@ -13,7 +13,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Motivation
 
--   Focusing on improvements in participation within a context where universal suffrage is already established.
+- Redistribution of resources is a key activity of the state, and its extent
+and form vary substantially worldwide. 
+
+- A government’s decision of how much to redistribute, and to whom, is embedded in a political system.
+
+- There is a long tradition of theoretical work positing that elections determine the allocation of resources. 
+
+- A key prediction of these models is that increased political participation of poorer voters leads to more redistribution (toward them).
+
+- The evidence on this, however, is mixed and puzzling.
+
+- Focusing on improvements in participation within a context where universal suffrage is already established.
 
 ### Goals
 
@@ -23,23 +34,56 @@ knitr::opts_chunk$set(echo = TRUE)
 
 -   Evaluate if this enfranchisement of the less educated citizenry did indeed affect policy in a manner consistent with political economy theories of redistribution.
 
--   Increase in the share of left-wing state legislators, increased public health care spending, utilization (prenatal visits), and an improvement in infant health markers (birthweight).
-
 ### Institutional Background
 
-## 2 - Empirical Strategy
+- Federal legislation establishes the same election rules for all states. Legislators are elected under an open-list proportional representation with the entire state being a single multi-member district. 
 
-### Bird's eye view
+- Under open-list rule, a citizen casts a vote to an individual candidate, not a party list. The combination of large districts and voting for individual candidates makes voters face a large number of candidates, making listing names or illustrations in a ballot impractical. Moreover, state elections in Brazil are held jointly with federal elections for president, the federal senate, and the lower chamber of congress. 
 
--   The paper exploits a regression discontinuity design (RDD) embedded in EV’s introduction.
+- Example: in the 1998 election, a voter in the state of São Paulo had to choose one candidate out of 1265 for the state legislature; 661 candidates for the lower chamber of federal congress; 10 candidates for state governor; 13 candidates for the federal senate; and 12 presidential candidates. This exemplifies the impossibility of simplified voting under paper ballots, as well as the overall complexity of voting.
 
--   In the 1998 election, only municipalities with more than 40,500 registered voters used the new technology, while the rest used paper ballots.
+- According to the 1991 Census (the last one prior to the introduction of electronic voting), 23% of adults were “unable to read
+or write a simple note.” Moreover, Brazilian paper ballots required citizens to write down their vote and involved only written instructions.
 
--   Only 58% of adults (aged 25+) completed 4th grade. Figures are from the 1991 Census (the last one prior to the introduction of electronic voting) the hypothesis that these voters were more likely to be less educated, the effects are larger in municipalities with higher illiteracy rates. Moreover, EV raises the vote shares of left-wing parties. These results are not driven by the (non-existent) effects on turnout or candidate entry (given the at-large nature of state elections).
+### Paper Ballots x EV
 
-Since the discontinuous assignment was observed in an election for state officials, I focus on state government spending, in particular on an area that disproportionately affects the less educated: health care. Poorer Brazilians rely mostly on a public-funded system for health care services, while richer voters are more likely to use private services (Alves and Timmins (2003)). The less educated have thus relatively stronger preferences for public health services, and a shift in spending toward health care can be interpreted as redistribution to the poor.4 Consistent with this interpretation, I also find that EV raised the number of prenatal visits by health professionals and lowered the prevalence of low-weight births (below 2500 g) by less educated women, but not for the more educated.5 The state-level results exploit the fact that the discontinuous assignment in the 1998 election created specific and unusual differences in the timing of exposure across states. The phase-in of the new technology was carried out over three consecutive elections held in 1994, 1998, and 2002. In 1994, only paper ballots were used. In 1998, there was the discontinuous assignment described above. In 2002, only EV was used. Such a schedule implies that the evolution of EV in a state is entirely determined by a time-invariant cross-sectional variable: the share of voters living in municipalities above the cutoff for its use in 1998. If a state has S% of its voters living above cutoff, S% of its voters changed from using paper to EV technology between the 1994 and 1998 elections. Moreover, between the 1998 and 2002 elections, the remaining (1−S)% of voters switched to EV. Hence, states with higher shares of voters above the 40,500-voter threshold experienced most of the enfranchising effects of EV earlier than the states with a low share. Intuitively, the empirical strategy tests if outcomes of interest track this same pattern. The effects of EV on policy outcomes are thus identified only from variation coming from the interaction of a cross-sectional variable (share of voters above the cutoff) with the timing of elections. In the period (1994–1998) when 4Health care is also a very salient issue for voters and politicians, as discussed in Section 3.1. 5Other than its importance for welfare and the growing evidence on the adult-life consequences of early-life health (Almond and Currie (2011), Currie and Vogl (2013)), the focus on birth outcomes is also motivated by issues of data availability and that newborn health can respond rapidly to health care improvements, which is important for an empirical strategy based on the sharp timing of EV roll-out.426 THOMAS FUJIWARA such a variable positively predicts EV use, it also positively predicts valid voting, health care spending, number of prenatal visits, and birthweight. On the other hand, in the period (1998–2002) when the same cross-sectional variable negatively predicts EV use, it negatively predicts these outcomes. Such results are interpreted as evidence of a causal effect of EV since this sharp change in the sign of how the same cross-sectional variable predicts growth in outcomes is unlikely to be driven by omitted variables. In other words, any confounding effect would have to follow a very specific pattern to confound the results. More precisely, an omitted variable or mean-reversing shock that (positively) affects health care spending would need to (i) be growing faster in states with higher share of voters above the cutoff, and (ii) change to growing slower in such states with a timing matching election dates. Four sets of additional tests provide evidence against these possible confounding effects. First, the timing of effects occurs quickly after elections, implying that possible omitted shocks (and their mean reversion) must follow quite specific timing. Second, the share of voters above the cutoff is orthogonal to changes in outcomes in periods when it is not associated with changes in voting technology, addressing the issue of preexisting trends. Third, I find negligible (placebo) effects on variables not expected to be affected by EV, such as general economic conditions and birth outcomes for more educated mothers, as well as spending by municipal governments, which were exposed to EV under different timing but should also respond to shocks to health care demand. Fourth, the results are robust to controlling for (nonlinear) time trends interacted with state characteristics, as well as an instrumental variable strategy that focuses on the distribution of municipalities closer to the cutoff. The estimates indicate that the de facto enfranchisement of approximately a tenth of Brazilian voters increased the share of states’ budgets spent on health care by 3.4 percentage points (p.p.), raising expenditure by 34% in an eightyear period. It also boosted the proportion of uneducated mothers with more than seven prenatal visits by 7 p.p. and lowered the prevalence of low-weight births by 0.5 p.p. (respectively, a 19% and −6:8% change over sample averages).
+![](voting_tech.png)
+
+## 2 - Empirical Strategy {.tabset}
 
 ### Details
+
+- The paper exploits a regression discontinuity design (RDD) embedded in EV’s introduction.
+
+- In the 1994 only paper ballots where used. In the 1998 election, only municipalities with more than 40,500 registered voters used the new technology, while the rest used paper ballots. While in 2002, only EV was used.
+
+- Such a schedule implies that the evolution of EV in a state is entirely determined by a time-invariant cross-sectional variable: the share of voters living in municipalities above the cutoff for its use in 1998. If a state has S% of its voters living above cutoff, S% of its voters changed from using paper to EV technology between the 1994 and 1998 elections. Moreover, between the 1998 and 2002 elections, the remaining (1−S)% of voters switched to EV. Hence, states with higher shares of voters above the 40,500-voter threshold should experience most of the enfranchising effects of EV earlier than the states with a low share. 
+
+- Intuitively, the empirical strategy tests if outcomes of interest track this same pattern. The effects of EV on policy outcomes are thus identified only from variation coming from the interaction of a cross-sectional variable (share of voters above the cutoff) with the timing of elections.
+
+- Focus on health care spending, since it is an area that disproportionately affects the less educated. Poorer Brazilians rely mostly on a public-funded system for health care services, while richer voters are more likely to use private services. The less educated have thus relatively stronger preferences for public health services, and a shift in spending toward health care can be interpreted as redistribution to the poor.
+
+- Prenatal visits and birthweight.
+
+- The main identification assumption behind this empirical approach is that
+no omitted variable affecting the outcomes follows the particular pattern of
+electronic voting’s introduction.
+
+- See if the timing of effects occurs quickly after elections, implying that possible omitted shocks (and their mean reversion) must follow quite specific timing. 
+
+- Check for (placebo) effects on variables not expected to be affected by EV, such as general economic conditions and birth outcomes for more educated mothers, as well as spending by municipal governments, which were exposed to EV under different timing but should also respond to shocks to health care demand. 
+
+- Focus on lagged and lead outcomes and, as we'll see, finds that the share of voters above the cutoff is orthogonal to changes in outcomes in the periods when it is not associated with EV changes in voting technology, addressing issues of pre-trends. 
+
+- Re-estimate the effects with controls for possible (nonlinear) time trends interacted with state characteristics, to test the possibility that the results are not driven by another shock with heterogeneous effect across states.
+
+### Timeline
+
+![](timeline.png)
+
+### Map
+
+![](figure_5.png)
 
 ## 3 - Results {.tabset}
 
@@ -57,4 +101,34 @@ Since the discontinuous assignment was observed in an election for state officia
 
 #### Table 1
 
+![](table_1.png)
+
+#### Table 2
+
+![](table_2.png)
+
+#### Table 3
+
+![](table_3.png)
+
+#### Table 4
+
+![](table_4.png)
+
+#### Table 5
+
+![](table_5.png)
+
+#### Table 6
+
+![](table_6.png)
+
 ## 4 - Conclusion
+
+- Results indicate that EV promoted the de facto enfranchisement of (mainly less educated) voters. 
+
+- Also showed consistency with the predictions of theories of redistributive politics and enfranchisement and democratization, since it increased government spending in a service that particularly benefits less educated voters: health care. It also had effects on its utilization and outcomes, increasing the number of prenatal visits and reducing the number of low-weight births by less educated mothers.
+
+- A caveat is that the estimated effects may be dependent on the particular context. The degree of literacy required to operate the Brazilian paper ballots and the features of the Brazilian political and health care systems. 
+
+- However, it still shows how increasing the political participation of disadvantaged groups can shift policymaking and affect outcomes, and, most importantly, provides evidence supporting the general mechanisms in redistributive politics.
