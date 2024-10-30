@@ -111,6 +111,7 @@ electronic voting’s introduction.
 ### Map
 
 ![](figure_5.png)
+![](map_replication.png)
 
 ## 3 - Results {.tabset}
 
