@@ -1,0 +1,25 @@
+/* Tamanho do título principal */
+h1 {
+    font-size: 28px; /* Ajuste o valor conforme desejar */
+}
+
+/* Tamanho do subtítulo */
+h2 {
+    font-size: 24px;
+}
+
+/* Tamanho do título menor */
+h3 {
+    font-size: 20px;
+}
+
+/* Customizações adicionais */
+body {
+    font-family: Arial, sans-serif; /* Alterar a fonte */
+}
+
+/* Alinhamento e cor do título */
+h1, h2, h3 {
+    text-align: center;
+    color: #333333; /* Cor dos títulos */
+}
