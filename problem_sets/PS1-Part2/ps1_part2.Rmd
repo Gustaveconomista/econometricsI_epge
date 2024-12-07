@@ -1,0 +1,159 @@
+---
+title: "Problem Set 1 - Econometrics I (Part 2)"
+author: "Gustavo Henrique & Bruno Tonholo"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: sandstone
+    toc: TRUE
+    toc_float: TRUE
+---
+
+# Question 4: Panel Data
+## Item (a)
+```{r}
+## Loading needed packages
+pacman::p_load(
+  tidyverse,
+  plm,
+  fixest
+)
+
+## Importing database
+psid_df = read.csv("WAGES_PSID_7yrs.csv")
+
+## Cleaning database
+psid_df = psid_df %>% 
+  mutate(exp_sqrd = exp^2) %>% 
+  rename("id" = "ID",
+         "year" = "YEAR") %>% 
+  select(-c(3:7, 9:10))
+
+## Implementing the within transformation
+group_means = psid_df %>%
+  group_by(id) %>%
+  summarise(
+    lwage_mean = mean(lwage),
+    across(c(edu, ms, exp, exp_sqrd), mean, .names = "{.col}_mean"),
+    .groups = "drop"
+  )
+within_df = left_join(psid_df, group_means, by = "id") %>% 
+  mutate(lwage_dem = lwage - lwage_mean,
+         edu_dem = edu - edu_mean,
+         exp_dem = exp - exp_mean,
+         exp_sqrd_dem = exp_sqrd - exp_sqrd_mean,
+         ms_dem = ms - ms_mean)
+
+## Estimating a fixed effects "within" estimator
+within_est = lm(lwage_dem ~ -1 + edu_dem + ms_dem + exp_dem + exp_sqrd_dem,
+           data = within_df)
+
+## Estimating the same model using plm package as benchmark
+plm_fe = plm(lwage ~ edu + ms + exp + exp_sqrd,
+           data = psid_df,
+           model = "within",
+           effect = "individual",
+           index = c("id", "year"))
+
+## Extracting results
+coef_within = coef(summary(within_est))
+coef_fe = coef(summary(plm_fe))
+
+## Creating a comparison DataFrame
+comparison_fe = data.frame(
+  Estimate_within = coef_within[, "Estimate"],
+  Estimate_plm_fe = coef_fe[, "Estimate"],
+  StdError_within = as.double(sprintf("%.10f", coef_within[, "Std. Error"])),
+  StdError_plm_fe = coef_fe[, "Std. Error"]
+)
+
+## Summarizing results
+comparison_fe
+```
+The results show an inverse relationship between wage and marital status, a direct relationship between wage and experience and a very small inverse relationship between wage and squared experience. In terms of statistical significance, both experience and squared experience are strong, while marital status fail to reject the null at 5% level.
+Also, by comparing with the benchmark estimation using *plm*, there is no difference between the coefficients, and there is negligible difference in terms of standard error, p-value and t-statistic. Notice that, given the structure of the dataset, the coefficient for the education variable was suppressed, since it has no intra-individual variation.
+
+## Item (b)
+```{r}
+## Estimating a random effects model
+# Extracting relevant variables
+id = psid_df$id
+time = psid_df$year
+y = psid_df$lwage
+X = as.matrix(psid_df[, c("edu", "ms", "exp", "exp_sqrd")])
+colnames(X) = c("edu", "ms", "exp", "exp_sqrd")
+
+# Computing overall means
+y_bar = mean(y)
+X_bar = colMeans(X)
+
+# Extracting group means for variables
+y_i_bar = within_df$lwage_mean
+X_i_bar = within_df %>%
+  select(ends_with("_mean")) %>% 
+  select(-lwage_mean) %>% 
+  as.matrix()
+
+# Calculating variance decomposition
+sigma_e2 = var(y - y_i_bar)            # Within-individual variance
+sigma_alpha2 = var(y_i_bar - y_bar)    # Between-individual variance
+
+# Calculating lambda
+T = length(unique(time))  # Number of time periods per individual
+lambda = 1 - sqrt(sigma_e2 / (sigma_e2 + T * sigma_alpha2))
+
+# Applying transformation
+y_trans = y - lambda * y_i_bar
+X_trans = X - lambda * X_i_bar
+
+# Estimating random effects model with OLS
+re_model = lm(y_trans ~ X_trans)
+
+## Estimating the same model using plm package as benchmark
+plm_re = plm(lwage ~ edu + ms + exp + exp_sqrd,
+           data = psid_df,
+           model = "random",
+           index = c("id", "year"))
+
+## Extracting results
+coef_random = coef(summary(re_model))[3:5, ]
+coef_re = coef(summary(plm_re))[3:5, ]
+
+## Creating a comparison DataFrame
+comparison_re = data.frame(
+  Estimate_random = coef_random[, "Estimate"],
+  Estimate_plm_re = coef_re[, "Estimate"],
+  StdError_random = as.double(sprintf("%.10f", coef_random[, "Std. Error"])),
+  StdError_plm_re = as.double(sprintf("%.10f", coef_re[, "Std. Error"]))
+)
+rownames(comparison_re) = c("ms", "exp", "exp_sqrd")
+
+## Summarizing results
+comparison_re
+```
+The main difference between this two models is that in the random effect we were able to estimate the effect of education on the log wage. In terms of point estimation of the covariates, the experience variables shows little difference, either between models and between the benchmark using *plm* package. However, for the marital status variable, we have a significant divergence in the "by-hand" estimation, both in terms of signal and level. In other words, while the benchmark estimation gives a coefficient of -0.0127, the "by-hand" estimation gives a value of 0.0068.
+
+## Item (c)
+Calculating the Hausman statistic and performing Hausman test by brute force:
+```{r}
+coef_fe = coef(within_est)[2:4]
+coef_re = coef(re_model)[3:5]
+vcov_fe = vcov(within_est)[2:4, 2:4]
+vcov_re = vcov(re_model)[3:5, 3:5]
+coef_diff = coef_re - coef_fe
+vcov_diff = vcov_fe - vcov_re
+H = if (as.numeric(t(coef_diff) %*% solve(vcov_diff) %*% coef_diff) > 0) {
+  as.numeric(t(coef_diff) %*% solve(vcov_diff) %*% coef_diff)
+} else {
+  (as.numeric(t(coef_diff) %*% solve(vcov_diff) %*% coef_diff))*(-1)
+}
+p_value = pchisq(H, df = length(coef_fe), lower.tail = FALSE)
+cat("Test statistic:", H, "\nValor-p:", p_value, "\n")
+if (p_value < 0.05) {
+  cat("Reject H0: Fixed effect model is more appropriate.\n")
+} else {
+  cat("Do not reject H0: Random effect model is more appropriate.\n")
+}
+```
+Hence, we reject de null hypothesis that there is no correlation between individual-specific unobserved heterogeneity and individuals’ characteristics captured by the covariates (marital status, experience and squared experience), which means that the fixed effect model is more appropriate. Recall that we can not compare the models in terms of the education regressor, since it was suppressed in the fixed effect estimate.
+Finally, notice that estimated variances for the entity-specific time-invariant unobserved heterogeneity and for the idiosyncratic component are represented by *sigma_e2* and *sigma_alpha2* objects, respectively.
