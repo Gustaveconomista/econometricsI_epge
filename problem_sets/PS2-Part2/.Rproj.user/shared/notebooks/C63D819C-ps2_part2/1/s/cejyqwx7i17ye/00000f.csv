@@ -1,0 +1,7 @@
+"0","# Checking if the columns 'event' and 'event_centered' are equal
+all(psid_es$event == psid_es$event_centered)
+"
+"1","[1]"
+"1"," TRUE"
+"1","
+"

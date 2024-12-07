@@ -1,0 +1,142 @@
+\documentclass[12pt]{article} %12 point too big in the palatino font
+\parindent0pt
+%\usepackage[activeacute,spanish]{babel} % for writing in spanish
+\usepackage[utf8]{inputenc}
+\usepackage[sc,osf]{mathpazo}
+\usepackage{geometry}
+\geometry{top=18mm, left=18mm, right=18mm}
+\usepackage{bbm}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{pgfplots}
+\usepackage{lscape}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{lscape}
+\usepackage{pgffor}
+\usepackage{subfig}
+\usepackage{pdflscape}
+\usepackage{fnpos}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage[mathscr]{euscript}
+\usepackage[justification=centering]{caption}
+\usepackage{booktabs} 
+%\usepackage{colortbl} 
+\usepackage{xcolor} 
+%\usepackage{xfrac}
+%\usepackage[bottom]{footmisc}
+\usepackage{rotating}
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{pdflscape}
+\let\euscr\mathscr \let\mathscr\relax% just so we can load this and rsfs
+\newcommand{\indep}{\rotatebox[origin=c]{90}{$\models$}}
+\usepackage[stable]{footmisc}
+\definecolor{midnightblue}{rgb}{0.1, 0.1, 0.44}
+\usepackage[framemethod=tikz]{mdframed}
+\definecolor{burgundy}{rgb}{0.5, 0.0, 0.13}
+
+\begin{document}
+	\title{\textcolor{burgundy}{\Large \textbf{Econometrics I} (Second Half)}\\ \Large Problem Set 2 \vspace{-1cm}}
+	
+	\author{\vspace{-4.5cm} }
+	\date{ \vspace{-0.75cm}}
+	\maketitle
+	
+	\begin{mdframed}[backgroundcolor=burgundy!12.5,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt,topline=false,leftline=false,rightline=false,bottomline=false]
+		\begin{mdframed}[backgroundcolor=burgundy!12.5,innerleftmargin=3pt,innerrightmargin=3pt,leftmargin=-3pt,rightmargin=-3pt,topline=false,leftline=false,rightline=false,bottomline=true]
+			\textbf{\textsc{Instructions (Read Carefully)}}
+		\end{mdframed}
+	
+			Please submit all of the files related to your solution to this problem set via email to me (\href{mailto:andrea.flores@fgv.br}{andrea.flores@fgv.br}) and your TA Igor (\href{mailto:igorbrito368@gmail.com}{igorbrito368@gmail.com}) by \textbf{\textsc{Sunday, December 8th} at 11:59pm}.\\
+	
+	Your solution to this problem set should consist of (1) a pdf with your responses to the items in each of the questions as if it was a report (for items that just require coding with no discussion, include a reference to a particular part of your code), and (2) the files containing the code used in each question that requires estimation. \\
+	
+	Go as far as you can. Even if you don't manage to complete all items in a question, partial credit will be applied generously if you clearly describe the issues you faced in approaching that particular question and intuitively explain how you think these issues could be addressed.\\
+	
+	{Good Luck!}
+		
+	\end{mdframed}
+
+
+\subsection*{Question 1: Difference-in-Differences and Matching Methods}
+Throughout this question, we will focus on the impact of the urban implementation of \textit{Progresa/Oportunidades} on children's school attendance. For this, you will be using the data file named \texttt{oportunidades\_encelurb\_ps2.dta} containing information on school-aged children from the official external quantitative evaluation of \textit{Oportunidades}. The file contains information on current school attendance of children in the household as well as socioeconomic status indicators at the household level. The relevant variables for outcomes will include: current school attendance (1 if attending school, 0 otherwise), weekly hours spent in school, total education-related expenditures made on the child, whether the child has received help from parents when doing homework, grade failure (repetition), weekly hours spent in housework, and weekly hours spent in child care.
+
+\begin{itemize}
+	\item[\textbf{(a)}]  Compute the difference-in-differences estimator manually by \textit{computing and reporting} -- in each of the cases below -- the following: $\bar{y}_{t_1}^1$ (mean outcomes for children in households receiving the cash transfer after the disbursements were made),  $\bar{y}_{t_0}^1$ (mean outcomes for children in households receiving the cash transfer before the disbursements were made),  $\bar{y}_{t_1}^0$ (mean outcomes for children in households \textbf{not} receiving the cash transfer after the disbursements were made),  $\bar{y}_{t_0}^0$ (mean outcomes for children in households receiving \textbf{not} the cash transfer before the disbursements were made)
+	\begin{enumerate}
+		\item[C1:] Include all the sample of children, report $\widehat{\alpha}_{All}^{DID} =( \bar{y}_{t_1}^1 - \bar{y}_{t_0}^1) - ( \bar{y}_{t_1}^0 - \bar{y}_{t_0}^0)$.
+				\item[C2:] Restrict the analysis to include only observations for girls, report $\widehat{\alpha}_G^{DID} =( \bar{y}_{t_1}^1 - \bar{y}_{t_0}^1) - ( \bar{y}_{t_1}^0 - \bar{y}_{t_0}^0)$.
+						\item[C3:] Restrict the analysis to include only observations for boys, report $\widehat{\alpha}_B^{DID} =( \bar{y}_{t_1}^1 - \bar{y}_{t_0}^1) - ( \bar{y}_{t_1}^0 - \bar{y}_{t_0}^0)$.
+	\end{enumerate}
+	
+	\item[\textbf{(b)}] For each of the cases (C1-C3) covered in part (a), run the following linear regression
+	\begin{align}
+		Y_{it} = \beta_0 + \beta_1 Treat_i + \beta_2 Post_t + \alpha (Post_t \times Treat_i) + \epsilon_{it}
+	\end{align}
+where $Post_t = \mathbbm{1}[wave>1]$. Using your results from part (a), verify that your OLS estimates for $\alpha$ coincide with the estimates for $\alpha^{DID}$ you calculated manually and interpret the following in terms of $\bar{y}_{t_1}^1$,  $\bar{y}_{t_0}^1$, $\bar{y}_{t_1}^0$, $\bar{y}_{t_0}^0$:
+\begin{itemize}
+	\item $\widehat{\beta}_0$
+	\item $\widehat{\beta}_1$  
+	\item $\widehat{\beta}_2$ 	
+	\end{itemize}
+
+
+\item[\textbf{(c)}] We have enough reasons to suspect that significant pre-treatment differences between un-treated and treated households -- potentially driving households' program participation decision -- might be contaminating our estimates of the ATT of \textit{Oportunidades}. We then want to implement the Matching DID (MDID) estimator, which explicitly accounts for the participation decision by exploiting information on each households' probability to participate in the program. Before considering the matching algorithm, you must estimate the propensity score. This propensity score then captures the probability that a household participates in \textit{Oportunidades} as a function of different set of variables captured at baseline. Then estimate the propensity score $p$ using a logit model including household characteristics you suspect affect this decision.
+
+\textit{Note: The propensity score should be estimated at the household level, so that two children living in the same household would have the same propensity score associated with them.}\\
+
+\item[\textbf{(d)}] Using $p$, compute and report $\widehat{\alpha}_{All}^{MDID}$, $\widehat{\alpha}_G^{MDID}$, and $\widehat{\alpha}_B^{MDID}$ (for each of the cases covered in part (a)) implementing the following matching algorithms:
+	\begin{itemize}
+		\item 2 nearest neighbor matching (with replacement)
+		\item Epanechnikov kernel matching using Silverman's rule of thumb for bandwidth selection
+	\end{itemize} 
+	Interpret your results.\\
+
+\end{itemize}
+
+
+\subsection*{Question 2: Event Study Design}
+In this question, we will use an extract from the PSID to quantify the effect of first childbirth on both mothers' and fathers' labor market outcomes. For this, refer to the file \texttt{PSID\_event\_study.dta}. In this dataset, you have a variable defined as \textit{yearkid1} which captures the year of birth of the first child of each individual in the panel. There is also information on age (\textit{age}), education (\textit{educr}), race(\textit{white} and \textit{black}), marital status (\textit{ms}), year-specific dummy variables (\textit{Dyear1968}, \textit{Dyear1969}, ... , \textit{Dyear2001}, \textit{Dyear2002}), age-specific dummy variables (\textit{Dage20}, \textit{Dage21}, \textit{Dage22}, ... , \textit{Dage44}, \textit{Dage45}) .\\
+
+Throughout this question, we consider the following specification:
+\begin{eqnarray}
+	Y_{istk} = \sum_{j = -3}^{-2} \alpha_j \mathbbm{1}[j=k] + \sum_{j = 0}^{10} \alpha_j \mathbbm{1}[j=k] + \sum_{l \in [20,45]} \gamma_l \mathbbm{1}[age_{istk}=l]  + \boldsymbol{\beta} \textbf{X}_{it} + \eta_s +\eta_t + \epsilon_{istk} \label{event_study}
+\end{eqnarray}
+$\textbf{X}_{it}$  denotes a vector of controls, including education (\textit{educr\_new}), a quadratic polynomial on education  (\textit{educrsq\_new}), race (\textit{black}, \textit{white}), and a categorical variable capturing  marital status (\textit{ms}), and $\eta_s$ and $\eta_t$ denote state and year fixed effects. The age indicators are included in the dataset as \textit{Dage20}, \textit{Dage21}, \textit{Dage22}, ... , \textit{Dage44}, \textit{Dage45}
+	
+\begin{itemize}
+	\item[\textbf{(a)}] Using the variable \textit{yearkid1} as the year in which the event occurred, define an event-time variable centered around this year so that $event = year - yearkid1$ for each individual in the panel. To check that this has been defined correctly, make sure that these coincide with the pre-constructed dummy variables called \textit{Deventm3, Deventm2, ... Devent0, ..., Devent10}.
+	
+	\item[\textbf{(b)}] Using the specification described in \ref{event_study}, run an event study on the following outcomes
+\begin{itemize}
+	\item Employment rate (\textit{dn})
+	\item Hours worked (\textit{wrkhrs})
+	\item Earnings (\textit{lbrx})
+\end{itemize} As a normalization, leave out the dummy variable corresponding to the year just before the birth of the first child. Make a plot of the coefficients associated with the event dummies ($\alpha_j$'s) with confidence intervals for men and women separately. Interpret your results. 
+
+
+\item[\textbf{(c)}] Re-do the estimation and plots from part \textbf{(b)} for the two sub-samples described below (again, for men and women separately):
+\begin{enumerate}
+    \item \textbf{Sub-sample 1:} individuals \textbf{exposed} to a job-protected leave policy at the time their first child is born (${policy}=0$).
+    \item \textbf{Sub-sample 2:} individuals \textbf{exposed} to a job-protected leave policy at the time their first child is born (${policy}=1$). \textit{In the specification for this sub-sample, omit the dummy variables for the years 1968 and 1969 as this would generate an unbalanced panel in event times.}
+\end{enumerate}
+Interpret your results.
+
+\item[\textbf{(d)}] Discuss the differences (if any) between the estimates you obtained in parts \textbf{(b)} and \textbf{(c)}. Interpret your results. In your discussion, carefully address the following:
+\begin{itemize}
+    \item Are there any significant differences in the labor market outcomes of parents exposed to job-protected leave and those not exposed to these policies \textbf{before} first childbirth?
+    \item Are there any significant differences in the labor market outcomes of parents exposed to job-protected leave and those not exposed to these policies \textbf{after} first childbirth?
+\end{itemize}
+	
+	
+\end{itemize} 
+
+
+
+\end{document}	

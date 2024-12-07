@@ -1,0 +1,159 @@
+---
+title: "Problem Set 2 - Econometrics I (Part 2)"
+author: "Gustavo Henrique & Bruno Tonholo"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: sandstone
+    toc: TRUE
+    toc_float: TRUE
+---
+
+# Question 2
+## Item (a)
+```{r}
+# Loading needed packages
+pacman::p_load(
+  tidyverse,
+  fixest,
+  stargazer,
+  haven,
+  broom,
+  tools
+)
+
+# Importing & cleaning database
+psid_es=read_dta("PSID_event_study.dta") %>% 
+  arrange(id, year) %>% 
+  mutate(sex = ifelse(sex == 2, 0, 1),
+         event_centered = year - yearkid1)
+
+# Checking if the columns 'event' and 'event_centered' are equal
+all(psid_es$event == psid_es$event_centered)
+```
+
+## Item (b)
+```{r}
+# Running event study regressions for the outcomes of interest
+results_list = list()
+results_labels = c()
+# Define outcomes and genders
+outcomes = c("dn", "wrkhrs", "lbrx")
+genders = c(1, 0)  # Assuming '1' is male and '0' is female in the 'sex' column
+
+for (gender in genders) {
+  for (outcome in outcomes) {
+    # Filter data by gender
+    df_gender = psid_es %>%
+      filter(sex == gender)
+    
+    # Run regression with fixed effects
+    formula = as.formula(paste(outcome, "~ i(event_centered, dummy_event, -1) + as.factor(age) + educr_new + educr_new + black + white + ms | state + year"))
+    model = feols(formula,
+      data = df_gender,
+    notes = F
+    )
+    
+    # Store results
+    gender_label = ifelse(gender == 1, "male", "female")
+    results_list[[paste(gender_label, outcome, sep = "_")]] = tidy(model)
+    results_labels = c(results_labels, paste(gender_label, outcome, sep = "_"))
+  }
+}
+
+# Plotting coefficients for each outcome
+## Function to plot event study results
+generate_es_plot = function(coeffs, se, title) {
+  plot1 = tibble(
+    year = sort(unique(psid_es$event_centered)),
+    mean = c(coeffs[1:2], 0, coeffs[3:13]),
+    se = c(se[1:2], 0, se[3:13])
+  )
+  
+  plot = plot1 %>%
+    ggplot(aes(x = year, y = mean,
+               ymin = (mean - se*1.96)*1.5, 
+               ymax = (mean + se*1.96)*1.5)) + 
+    geom_point() + 
+    geom_hline(yintercept = 0,
+               linetype = "dashed") + 
+    geom_errorbar(aes(ymin = mean - se*1.96, ymax = mean + se*1.96),
+                  width = 0.2,
+                  position = position_dodge(0.05),
+                  color = c("darkred", "darkred", "black", "darkblue", "darkblue", "darkblue", "darkblue", "darkblue", "darkblue", "darkblue", "darkblue", "darkblue", "darkblue", "darkblue")) +
+    geom_vline(xintercept = -1) + 
+    scale_x_continuous(breaks = seq(-3, 10, by = 1)) +
+    labs(title = title) +
+    theme_minimal() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(size = 12, hjust = 0.5, face = "bold")
+    ) +
+    ylab("ATT") +
+    xlab("Event time")
+  
+  return(plot)
+}
+
+for (label in results_labels) {
+  plot = generate_es_plot(results_list[[label]]$estimate[1:13], results_list[[label]]$std.error[1:13], gsub("_", "-", label))
+  print(plot)
+}
+```
+
+## Item (c)
+```{r}
+# Subgroup analysis by policy
+results_list2 = list()
+results_labels2 = c()
+
+for (gender in genders) {
+  for (outcome in outcomes) {
+    # Filter data
+    df_subgroup = psid_es %>%
+      filter(policy == 0 & sex == gender)
+    
+    # Run regression with fixed effects
+  formula = as.formula(paste(outcome, "~ i(event_centered, dummy_event, -1) + as.factor(age) + educr_new + educr_new + black + white + ms | state + year"))
+  model = feols(formula,
+    data = df_subgroup,
+    notes = F
+  )
+    
+    # Store results
+    policy_label = ifelse(unique(df_subgroup$policy) == 1, "policy", "no_policy")
+    gender_label = ifelse(gender == 1, "male", "female")
+    results_list2[[paste(policy_label, gender_label, outcome, sep = "_")]] = tidy(model)
+    results_labels2 = c(results_labels2, paste(policy_label, gender_label, outcome, sep = "_"))
+  }
+}
+
+for (gender in genders) {
+  for (outcome in outcomes) {
+    # Filter data
+    df_subgroup = psid_es %>%
+      filter(policy == 1 & sex == gender & year > 1969)
+    
+    # Run regression with fixed effects
+  formula = as.formula(paste(outcome, "~ i(event_centered, dummy_event, -1) + as.factor(age) + educr_new + educr_new + black + white + ms | state + year"))
+  model = feols(formula,
+    data = df_subgroup,
+    notes = F
+  )
+    
+    # Store results
+    policy_label = ifelse(unique(df_subgroup$policy) == 1, "policy", "no_policy")
+    gender_label = ifelse(gender == 1, "male", "female")
+    results_list2[[paste(policy_label, gender_label, outcome, sep = "_")]] = tidy(model)
+    results_labels2 = c(results_labels2, paste(policy_label, gender_label, outcome, sep = "_"))
+  }
+}
+
+# Plotting results
+for (label in results_labels2) {
+  plot = generate_es_plot(results_list2[[label]]$estimate[1:13], results_list2[[label]]$std.error[1:13], gsub("_", "-", label))
+  print(plot)
+}
+```
+

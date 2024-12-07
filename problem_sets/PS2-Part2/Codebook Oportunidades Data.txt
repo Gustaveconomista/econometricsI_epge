@@ -1,0 +1,36 @@
+Codebook for the dataset oportunidades_encelurb_ps2.dta
+
+Variables at the state level:
+gdp2000
+gdp2001
+gdp2002
+Indice [marginality index/poverty index at the state level for 2002]
+
+Variables at the household level [same for all children living in the same household]:
+id_hogar [Household identifier]
+HS_employed_01_mother [Mother worked in 2001]
+HS_employed_02_mother [Mother worked in 2002]
+HS_employed_01_father [Father worked in 2001]
+HS_employed_02_father [Father worked in 2002]
+HS_age_mother [Age of the mother of the child]
+HS_age_father [Age of the father of the child]
+HS_years_edu_mother [Years of education of the mother]
+HS_years_edu_father [Years of education of the father]
+hs_nlinc [Household non-labor income]
+cal_soc [poverty classification computed by the program administration/the higher the value of cal_soc the poorer]
+
+
+Variables at the individual level [varying across individuals in the same household]:
+id_pers [Person identifier]
+gender [Gender -- 1 Male; 2 Female]
+tot_years_edu [Individual's years of education]
+weekly_school [weekly hours spent in school; outcome variable]
+fail_grade [previous grade failure/repetition; outcome variable]
+current_school_att [currently attending school; outcome variable]
+school_yexp [yearly expenditures on schooling-related outcomes related to the child; outcome variables]
+child_care [Weekly hours spent in care activities; outcome variable]
+total_home_production [Weekly hours spent in household chores; outcome variable]
+
+Relevant variables to capture treatment effects:
+treat
+post_t
