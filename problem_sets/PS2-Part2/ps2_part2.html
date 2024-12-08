@@ -1580,6 +1580,95 @@ print(results)</code></pre>
 ## 5 -0.056968618
 ## 6 -0.504065795
 ## 7 -0.189603405</code></pre>
+<p>Now by gender:</p>
+<pre class="r"><code># Initialize matrices to store results for boys and girls separately
+y1_t1_boys &lt;- numeric(length(outcome_vars))
+y1_t0_boys &lt;- numeric(length(outcome_vars))
+y0_t1_boys &lt;- numeric(length(outcome_vars))
+y0_t0_boys &lt;- numeric(length(outcome_vars))
+
+y1_t1_girls &lt;- numeric(length(outcome_vars))
+y1_t0_girls &lt;- numeric(length(outcome_vars))
+y0_t1_girls &lt;- numeric(length(outcome_vars))
+y0_t0_girls &lt;- numeric(length(outcome_vars))
+
+# Loop over outcomes to calculate means for boys and girls
+for (i in seq_along(outcome_vars)) {
+  var &lt;- outcome_vars[i]
+  
+  # For boys
+  y1_t1_boys[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 1 &amp; oportunidades$post_t == 1 &amp; oportunidades$gender == 1], na.rm = TRUE)
+  y1_t0_boys[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 1 &amp; oportunidades$post_t == 0 &amp; oportunidades$gender == 1], na.rm = TRUE)
+  y0_t1_boys[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 0 &amp; oportunidades$post_t == 1 &amp; oportunidades$gender == 1], na.rm = TRUE)
+  y0_t0_boys[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 0 &amp; oportunidades$post_t == 0 &amp; oportunidades$gender == 1], na.rm = TRUE)
+
+  # For girls
+  y1_t1_girls[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 1 &amp; oportunidades$post_t == 1 &amp; oportunidades$gender == 2], na.rm = TRUE)
+  y1_t0_girls[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 1 &amp; oportunidades$post_t == 0 &amp; oportunidades$gender == 2], na.rm = TRUE)
+  y0_t1_girls[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 0 &amp; oportunidades$post_t == 1 &amp; oportunidades$gender == 2], na.rm = TRUE)
+  y0_t0_girls[i] &lt;- mean(oportunidades[[var]][oportunidades$treat == 0 &amp; oportunidades$post_t == 0 &amp; oportunidades$gender == 2], na.rm = TRUE)
+}
+
+# Store results in data frames
+results_boys &lt;- data.frame(
+  Outcome = outcome_vars,
+  y1_t1_boys = y1_t1_boys,
+  y1_t0_boys = y1_t0_boys,
+  y0_t1_boys = y0_t1_boys,
+  y0_t0_boys = y0_t0_boys
+)
+
+results_girls &lt;- data.frame(
+  Outcome = outcome_vars,
+  y1_t1_girls = y1_t1_girls,
+  y1_t0_girls = y1_t0_girls,
+  y0_t1_girls = y0_t1_girls,
+  y0_t0_girls = y0_t0_girls
+)
+
+# Compute alpha DID for boys and girls
+results_boys$alpha_DID &lt;- (results_boys$y1_t1_boys - results_boys$y1_t0_boys) - (results_boys$y0_t1_boys - results_boys$y0_t0_boys)
+results_girls$alpha_DID &lt;- (results_girls$y1_t1_girls - results_girls$y1_t0_girls) - (results_girls$y0_t1_girls - results_girls$y0_t0_girls)
+
+# Print the results for boys and girls
+print(&quot;Results for Boys:&quot;)</code></pre>
+<pre><code>## [1] &quot;Results for Boys:&quot;</code></pre>
+<pre class="r"><code>print(results_boys)</code></pre>
+<pre><code>##                 Outcome   y1_t1_boys  y1_t0_boys   y0_t1_boys  y0_t0_boys
+## 1    school_att_current   0.85714286   0.8822355   0.84547564   0.8728674
+## 2         weekly_school  22.08172458  22.7286980  17.56611166  22.6955093
+## 3           school_yexp 555.58090023 483.1885167 668.96407883 601.1403238
+## 4               hw_help   0.43065134   0.4539474   0.49783550   0.4509112
+## 5            fail_grade   0.06153846   0.2604549   0.05440696   0.1839286
+## 6 total_home_production   2.19217491   2.9500000   2.23796296   2.6411385
+## 7            child_care   0.42130959   0.7304845   0.53146691   0.8047386
+##      alpha_DID
+## 1  0.002299054
+## 2  4.482424213
+## 3  4.568628479
+## 4 -0.070220297
+## 5 -0.069394810
+## 6 -0.354649552
+## 7 -0.035903281</code></pre>
+<pre class="r"><code>print(&quot;Results for Girls:&quot;)</code></pre>
+<pre><code>## [1] &quot;Results for Girls:&quot;</code></pre>
+<pre class="r"><code>print(results_girls)</code></pre>
+<pre><code>##                 Outcome y1_t1_girls y1_t0_girls  y0_t1_girls y0_t0_girls
+## 1    school_att_current   0.8909774   0.8950749   0.87123421   0.8892095
+## 2         weekly_school  22.7029703  23.0246555  18.47787611  23.3716916
+## 3           school_yexp 564.3919593 474.2543950 653.13093518 610.0391667
+## 4               hw_help   0.4359388   0.4390432   0.46130031   0.4817073
+## 5            fail_grade   0.0493653   0.2032457   0.02654867   0.1355499
+## 6 total_home_production   5.4391468   5.0208170   6.11073171   5.0725907
+## 7            child_care   1.0632832   1.4684814   1.39067055   1.4550173
+##     alpha_DID
+## 1  0.01387775
+## 2  4.57213024
+## 3 47.04579574
+## 4  0.01730256
+## 5 -0.04487925
+## 6 -0.61981114
+## 7 -0.34085142</code></pre>
 </div>
 <div id="item-b" class="section level2">
 <h2>Item (b)</h2>

@@ -63,6 +63,66 @@ results$alpha_DID <- (results$y1_t1 - results$y1_t0) - (results$y0_t1 - results$
 
 print(results)
 ```
+Now by gender:
+
+```{r}
+# Initialize matrices to store results for boys and girls separately
+y1_t1_boys <- numeric(length(outcome_vars))
+y1_t0_boys <- numeric(length(outcome_vars))
+y0_t1_boys <- numeric(length(outcome_vars))
+y0_t0_boys <- numeric(length(outcome_vars))
+
+y1_t1_girls <- numeric(length(outcome_vars))
+y1_t0_girls <- numeric(length(outcome_vars))
+y0_t1_girls <- numeric(length(outcome_vars))
+y0_t0_girls <- numeric(length(outcome_vars))
+
+# Loop over outcomes to calculate means for boys and girls
+for (i in seq_along(outcome_vars)) {
+  var <- outcome_vars[i]
+  
+  # For boys
+  y1_t1_boys[i] <- mean(oportunidades[[var]][oportunidades$treat == 1 & oportunidades$post_t == 1 & oportunidades$gender == 1], na.rm = TRUE)
+  y1_t0_boys[i] <- mean(oportunidades[[var]][oportunidades$treat == 1 & oportunidades$post_t == 0 & oportunidades$gender == 1], na.rm = TRUE)
+  y0_t1_boys[i] <- mean(oportunidades[[var]][oportunidades$treat == 0 & oportunidades$post_t == 1 & oportunidades$gender == 1], na.rm = TRUE)
+  y0_t0_boys[i] <- mean(oportunidades[[var]][oportunidades$treat == 0 & oportunidades$post_t == 0 & oportunidades$gender == 1], na.rm = TRUE)
+
+  # For girls
+  y1_t1_girls[i] <- mean(oportunidades[[var]][oportunidades$treat == 1 & oportunidades$post_t == 1 & oportunidades$gender == 2], na.rm = TRUE)
+  y1_t0_girls[i] <- mean(oportunidades[[var]][oportunidades$treat == 1 & oportunidades$post_t == 0 & oportunidades$gender == 2], na.rm = TRUE)
+  y0_t1_girls[i] <- mean(oportunidades[[var]][oportunidades$treat == 0 & oportunidades$post_t == 1 & oportunidades$gender == 2], na.rm = TRUE)
+  y0_t0_girls[i] <- mean(oportunidades[[var]][oportunidades$treat == 0 & oportunidades$post_t == 0 & oportunidades$gender == 2], na.rm = TRUE)
+}
+
+# Store results in data frames
+results_boys <- data.frame(
+  Outcome = outcome_vars,
+  y1_t1_boys = y1_t1_boys,
+  y1_t0_boys = y1_t0_boys,
+  y0_t1_boys = y0_t1_boys,
+  y0_t0_boys = y0_t0_boys
+)
+
+results_girls <- data.frame(
+  Outcome = outcome_vars,
+  y1_t1_girls = y1_t1_girls,
+  y1_t0_girls = y1_t0_girls,
+  y0_t1_girls = y0_t1_girls,
+  y0_t0_girls = y0_t0_girls
+)
+
+# Compute alpha DID for boys and girls
+results_boys$alpha_DID <- (results_boys$y1_t1_boys - results_boys$y1_t0_boys) - (results_boys$y0_t1_boys - results_boys$y0_t0_boys)
+results_girls$alpha_DID <- (results_girls$y1_t1_girls - results_girls$y1_t0_girls) - (results_girls$y0_t1_girls - results_girls$y0_t0_girls)
+
+# Print the results for boys and girls
+print("Results for Boys:")
+print(results_boys)
+
+print("Results for Girls:")
+print(results_girls)
+```
+
 
 ## Item (b)
 
