@@ -1,0 +1,158 @@
+---
+title: "Final Exam - Econometrics I"
+author: "Gustavo Henrique & Bruno Tonholo"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: sandstone
+    toc: TRUE
+    toc_float: TRUE
+---
+
+# Question 1
+## Loading needed packages
+```{r}
+pacman::p_load(tidyverse)
+```
+
+## Importing and cleaning ppebase
+```{r}
+ppe = read.csv("progresa_policy_evaluation.csv") %>% 
+  arrange(id_hogar) %>% 
+  mutate(treat = ifelse(pobreden == "1", 1, 0),
+         y_diff = y_post - y_baseline)
+```
+
+## Item (a)
+Model without covariates
+```{r}
+model1 = lm(y_post ~ treat,
+            data = ppe)
+summary(model1)
+```
+Model with covariates
+```{r}
+model2 = lm(y_post ~ treat + age_baseline + sex_baseline,
+            data = ppe)
+summary(model2)
+```
+
+## Item (b)
+Model without covariates
+```{r}
+model3 = lm(y_diff ~ treat,
+            data = ppe)
+summary(model3)
+```
+
+Model without covariates
+```{r}
+model4 = lm(y_diff ~ treat + age_baseline + sex_baseline,
+            data = ppe)
+summary(model4)
+```
+
+## Item (c)
+```{r}
+# Centralizing the running variable
+ppe = ppe %>% 
+  mutate(yycali_97_centered = yycali_97 - cut,
+         const = 1)
+
+# Corrected Silverman bandwidth estimator
+silverman_bandwidth = function(X) {
+  n = length(X)
+  h = 2.345*n^(-1/5)*sd(X)
+  return(h)
+}
+bw_silverman = silverman_bandwidth(ppe$yycali_97)
+
+# Defining the Epanechnikov kernel and the indicator functions
+epanechnikov_kernel <- function(u) {
+  k = ifelse(abs(u) <= 1, 0.75*(1 - u^2), 0)
+  return(k)
+}
+
+# Defining variables
+X1 = as.matrix(ppe %>% 
+  filter(treat == 1) %>% 
+  select(const, yycali_97_centered))
+y1 = ppe%>% 
+  filter(treat == 1) %>% 
+  select(y_post) %>% 
+  pull()
+X0 = as.matrix(ppe %>% 
+  filter(treat == 0) %>% 
+  select(const, yycali_97_centered))
+y0 = ppe%>% 
+  filter(treat == 0) %>% 
+  select(y_post) %>% 
+  pull()
+u1 = (X1[, 2])/bw_silverman
+u0 = (X0[, 2])/bw_silverman
+
+# Calculating kernel weightings
+w1 = diag(epanechnikov_kernel(u1))
+w0 = diag(epanechnikov_kernel(u0))
+
+# Calculating beta 1
+beta1 = solve(t(X1)%*%w1%*%X1)%*%(t(X1)%*%w1%*%y1)
+
+# Calculating beta 0
+beta0 = solve(t(X0)%*%w0%*%X0)%*%(t(X0)%*%w0%*%y0)
+
+# Calculating beta RDD
+beta_rdd = beta1 - beta0
+beta_rdd
+```
+
+(i) Increasing h
+```{r}
+bw_i = bw_silverman*1.5
+u1_i = (X1[, 2])/bw_i
+u0_i = (X0[, 2])/bw_i
+
+# Calculating kernel weightings
+w1_i = diag(epanechnikov_kernel(u1_i))
+w0_i = diag(epanechnikov_kernel(u0_i))
+
+# Calculating beta 1
+beta1_i = solve(t(X1)%*%w1_i%*%X1)%*%(t(X1)%*%w1_i%*%y1)
+
+# Calculating beta 0
+beta0_i = solve(t(X0)%*%w0_i%*%X0)%*%(t(X0)%*%w0_i%*%y0)
+
+# Calculating beta RDD
+beta_rdd_i = beta1_i - beta0_i
+beta_rdd_i
+```
+
+(ii) Decreasing h
+```{r}
+bw_d = bw_silverman*0.5
+u1_d = (X1[, 2])/bw_d
+u0_d = (X0[, 2])/bw_d
+
+# Calculating kernel weightings
+w1_d = diag(epanechnikov_kernel(u1_d))
+w0_d = diag(epanechnikov_kernel(u0_d))
+
+# Calculating beta 1
+beta1_d = solve(t(X1)%*%w1_d%*%X1)%*%(t(X1)%*%w1_d%*%y1)
+
+# Calculating beta 0
+beta0_d = solve(t(X0)%*%w0_d%*%X0)%*%(t(X0)%*%w0_d%*%y0)
+
+# Calculating beta RDD
+beta_rdd_d = beta1_d - beta0_d
+beta_rdd_d
+```
+Printing results
+```{r}
+results = data.frame(
+  Bandwidth = c("Original", "Increased", "Decreased"),
+  Constant = c(beta_rdd[1], beta_rdd_i[1], beta_rdd_d[1]),
+  Beta_RDD = c(beta_rdd[2], beta_rdd_i[2], beta_rdd_d[2])
+)
+results
+```
